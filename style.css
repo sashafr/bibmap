@@ -1,0 +1,113 @@
+#viewDiv{
+
+  width:52%;
+  height:100%;
+  /*border:1px solid black;*/
+  border: 2px solid #000080;
+  position: relative;
+  display: inline-flex
+}
+
+#search {
+  height:100%;
+  width:22%;
+  /*border:1px solid black;*/
+  border: 2px solid #000080;
+  position:relative;
+  float:right
+}
+
+.searchButton {
+  margin:8px;
+
+}
+
+#selectionInfo{
+  float:left;
+  position: relative;
+  width: 24%;
+  height:100%;
+  overflow-y: auto;
+  border: 2px solid #000080;
+  margin-right: 8px;
+
+}
+
+#selectionTitle {
+  font-size: 16px;
+position: relative;
+float: left;
+text-transform: uppercase;
+margin-top: 15px;
+margin-left: 15px;
+margin-bottom: 10px;
+width: 350px;
+font-weight: bold;
+}
+
+#allRecords {
+  margin: 10px;
+
+}
+
+.record {
+  border: 1.5px solid #a8b6ea;
+  margin-left: 8px;
+  margin-right: 8px;
+  padding: 8px;
+  margin-top:20px;
+
+}
+
+.browse {
+  margin-left:10px;
+}
+
+.browseClass {
+  margin-top: 10px;
+  margin-left: 4px;
+
+}
+
+button.link {
+  background:none;
+  border:none;
+}
+
+.esri-draw-button {
+  background-color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  display: inline-block;
+  width: 100px;
+  font-size: 1.5em;
+}
+
+.esri-draw-button-selected {
+  opacity: 1;
+  background-color: rgba(102, 0, 255, 0.75);
+  color: white;
+}
+
+.esri-draw-button-selected:hover {
+  background-color: rgba(102, 0, 255, 0.3);
+  color: white;
+}
+
+.esri-point-button {
+  background-color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  display: inline-block;
+  width: 100px;
+  font-size: 1.5em;
+}
+
+.esri-point-button-selected {
+  opacity: 1;
+  background-color: rgba(102, 0, 255, 0.75);
+  color: white;
+}
+
+.esri-point-button-selected:hover {
+  background-color: rgba(102, 0, 255, 0.3);
+  color: white;
+}

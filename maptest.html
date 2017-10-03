@@ -1,0 +1,681 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title></title>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.4/esri/css/main.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://js.arcgis.com/4.4/"></script>
+
+  <script>
+  require([
+    "esri/Map",
+    "esri/WebMap",
+    "esri/views/MapView",
+    "esri/layers/FeatureLayer",
+    "esri/geometry/Point",
+    "esri/geometry/Polygon",
+    "esri/geometry/Circle",
+    "esri/geometry/Extent",
+    "esri/Graphic",
+    "esri/Color",
+    "esri/symbols/SimpleMarkerSymbol",
+    "esri/layers/GraphicsLayer",
+    "esri/symbols/SimpleFillSymbol",
+    "esri/symbols/SimpleLineSymbol",
+    "esri/tasks/QueryTask",
+    "esri/tasks/support/Query",
+    "esri/tasks/support/StatisticDefinition",
+    "esri/geometry/geometryEngine",
+    "esri/widgets/Search",
+    "esri/widgets/Popup",
+    "dojo/domReady!",
+    "dojo/ready"
+  ],
+
+  function(Map, WebMap, MapView, FeatureLayer, Point, Polygon, Circle, Extent, Graphic, Color, SimpleMarkerSymbol, GraphicsLayer, SimpleFillSymbol, SimpleLineSymbol, QueryTask,
+    Query, StatisticDefinition, geometryEngine, Search, Popup){
+
+      //------------------------------INITIALIZE MAP AND VARIABLES---------------------------------------
+      var polygon;
+      var geometry;
+      var layer;
+      var selectedPoints = new GraphicsLayer();
+      var selectedPointsGraphics;
+      var biblioFeatures;
+      var searchPoint = false;
+      var drawing = false;
+      var biblioFeatures2 = [];
+      var allRecords = document.getElementById("allRecords");
+      var selectionTitle = document.getElementById("selectionTitle");
+      var defaultRecordsHTML = "<div id = 'defaultContent'> This site contains a collection of journal articles related to Turkish archaeology.  You can search by language or jounal title.  " +
+      "You can also search by clicking a point or searching an address and selecting a proximity, or by selecting a polygon to search in. </div>";
+
+      var drawConfig = {
+        drawingSymbol: new SimpleFillSymbol({
+          color: [102, 0, 255, 0.15],
+          outline: {
+            color: "#6600FF",
+            width: 2
+          }
+        }),
+        finishedSymbol: new SimpleFillSymbol({
+          color: [102, 0, 255, 0.45],
+          outline: {
+            color: "#6600FF",
+            width: 2
+          }
+        }),
+        activePolygon: null,
+        isDrawActive: false
+      };
+
+      //initialize the webmap and view
+      var map = new WebMap({
+        portalItem: { // autocasts as new PortalItem()
+          id: "9a9b91f65ff54acdaea451d8d5d33fce"
+
+        }
+      })
+
+      var view = new MapView({
+        container: "viewDiv",  // Reference to the scene div created in step 5
+        map: map,  // Reference to the map object created before the scene
+        zoom: 4,  // Sets zoom level based on level of detail (LOD)
+        center: [30, 40]  // Sets center point of view using longitude,latitude
+
+      });
+
+      var searchWidget = new Search({
+        view: view,
+        resultGraphicEnabled: false,
+        popupEnabled: false,
+        popupOpenOnSelect: false,
+
+      });
+
+      //Add buttons
+      view.ui.add("draw-button", "top-left");
+      view.ui.add("point-button", "top-left");
+      view.ui.add("clear-button", "top-left");
+      view.ui.add("distance_select", "top-right");
+      view.ui.add(searchWidget, {
+        position: "top-right",
+        index: 2
+      });
+
+      //test if value is in array
+      function isInArray(value, array) {
+        return array.indexOf(value) > -1;
+      }
+
+
+      //---------------------------BUTTONS, SELECTORS AND FUNCTION CALLS----------------------
+      //fires once the map is loaded.  all map activities must happen here
+      view.then(function() {
+          //uncomment this to get a list of all the layer ids on the map
+          /*var allLayers = map.allLayers.toArray();
+          for (var i = 0; i < allLayers.length; i++) {
+          console.log(allLayers[i].id);
+        }*/
+
+        layerID = "csv_4499";
+        layer = map.findLayerById(layerID);
+        allRecords.innerHTML = defaultRecordsHTML;
+
+        //uncomment to get the names and indexes of all fields in the layer
+        /*for (var i = 0; i < layer.fields.length; i++){
+        console.log("field index " + i + " is " + layer.fields[i].name);
+        }*/
+
+        //uncomment to get the type of layer being loaded (FeatureLayer or GraphicsLayer)
+        //alert(layer.type);
+
+        //create an array of all features that won't be changed by adding or removing features
+        //from the layer
+
+        var biblioFeatures = layer.source.toArray();
+        for (var i = 0; i < biblioFeatures.length; i++) {
+          biblioFeatures2.push(biblioFeatures[i]);
+        }
+
+        //Popupate the desired divs in the search and browse based on div Id and field
+        createBrowse("languages", "Text_language");
+        createBrowse("series", "Publication_series");
+
+        //add show all button
+        var showAll = document.getElementById("showAll");
+        showAll.addEventListener("click", function(){
+          allRecords.innerHTML = defaultRecordsHTML;
+          printAllRecords();
+          for (i = layer.source.length - 1; i > -1; i--) {
+            layer.source.remove(layer.source.toArray()[i]);
+          }
+          for (i = 0; i < biblioFeatures2.length; i++) {
+            layer.source.add(biblioFeatures2[i]);
+          }
+        });
+
+        //clear the selection and reset the map when the clear button is clicked
+        clearButton = document.getElementById("clear-button");
+        clearButton.addEventListener("click", function() {
+          var images = document.getElementsByTagName('image');
+          if (images.length > 0) {
+            for (i = 0; i < images.length; i++) {
+              images[i].parentNode.removeChild(images[i]);
+            }
+          }
+          clearPolygon();
+          allRecords.innerHTML = defaultRecordsHTML;
+          selectionTitle.innerHTML = "<b>Welcome to the Turkish Archaeology Geographical Bibliography</b>";
+          if (searchPoint == true) {
+            pointButton.classList.toggle("esri-point-button-selected");
+            searchPoint = false;
+          }
+          if (drawing == true) {
+            drawButton.classList.toggle("esri-draw-button-selected");
+            deactivateDraw();
+            drawing = false;
+          }
+          document.getElementById("distance_select").selectedIndex = 0;
+          searchWidget.clear();
+          view.popup.close();
+
+          filterPoints(biblioFeatures2);
+
+          var extent = new Extent({
+            xmin: 20.25,
+            ymin: 23.3,
+            xmax: 55.25,
+            ymax: 55.25
+
+          });
+          view.goTo(extent);
+
+        });
+
+        //start drawing when the draw button is clicked
+        drawButton = document.getElementById("draw-button");
+        drawButton.addEventListener("click", function() {
+          drawing = !drawing;
+          var images = document.getElementsByTagName('image');
+          if (images.length > 0) {
+            for (i = 0; i < images.length; i++) {
+              images[i].parentNode.removeChild(images[i]);
+            }
+          }
+          drawButton.classList.toggle("esri-draw-button-selected");
+          if (searchPoint == true) {
+            pointButton.classList.toggle("esri-point-button-selected");
+            searchPoint = false;
+          }
+          document.getElementById("distance_select").selectedIndex = 0;
+          searchWidget.clear();
+          view.popup.close();
+          if (!drawConfig.isDrawActive) {
+            activateDraw(biblioFeatures2);
+          }
+          else {
+            deactivateDraw();
+            clearPolygon();
+          }
+        });
+
+      //select by point when the user clicks on the map
+        pointButton = document.getElementById("point-button");
+        pointButton.addEventListener("click", function() {
+          //this is the only way to get rid of the graphic created by the geosearch
+          var images = document.getElementsByTagName('image');
+          if (images.length > 0) {
+            for (i = 0; i < images.length; i++) {
+              images[i].parentNode.removeChild(images[i]);
+            }
+          }
+          searchPoint = !searchPoint;
+          allRecords.innerHTML = "";
+          pointButton.classList.toggle("esri-point-button-selected");
+          clearPolygon();
+          document.getElementById("distance_select").selectedIndex = 0;
+          searchWidget.clear();
+          view.popup.close();
+          if (drawing == true) {
+            drawButton.classList.toggle("esri-draw-button-selected");
+            drawing = false;
+            deactivateDraw();
+
+          }
+        });
+
+        //listen for clicks on the map
+        view.on("click", function(evt) {
+          //if the search by click button has been selected, search within a certain distance
+          //of the click
+
+          if (searchPoint == true) {
+            searchWidget.clear();
+            view.popup.destroy();
+            clearPolygon();
+            circle = new Circle({
+              center: evt.mapPoint,
+              geodesic: false,
+              radius: 300,
+              radiusUnit: "miles"
+            });
+            var circleSymb = new SimpleFillSymbol(SimpleFillSymbol.STYLE_NULL,
+              new SimpleLineSymbol(
+                SimpleLineSymbol.STYLE_SHORTDASHDOTDOT,
+                new Color([105, 105, 105]),2), new Color([255, 255, 0, 0.25]));
+            var graphic = new Graphic(circle, circleSymb);
+            view.graphics.add(graphic);
+            queryPoints(circle);
+            linkRecordsToPopups();
+
+          } //end if searchPoint true
+
+          evt.stopPropagation();
+        });
+
+      });  //end view.then
+
+    //----------------------------SEARCH WIDGET-------------------------------------
+    searchWidget.on("search-complete", function(data) {
+
+      clearPolygon();
+      if (searchPoint == true) {
+        pointButton.classList.toggle("esri-point-button-selected");
+        searchPoint = false;
+      }
+      var distanceValue = document.getElementById("distance_select").value;
+      var point2 = new Point(searchWidget.results[0].results[0].feature.geometry);
+      circle2 = new Circle({
+        center: point2,
+        geodesic: false,
+        radius: distanceValue,
+        radiusUnit: "miles"
+      });
+
+      queryPoints(circle2);
+      linkRecordsToPopups();
+    });
+
+  //-------------------------SEARCH FUNCTIONS------------------------------------
+
+  //select points within a circle or polygon
+  function queryPoints(searchArea) {
+    biblioFeatures = layer.source.toArray();
+    var includeDistance = false;
+    //include the distance in the search results if searching from a clicked point
+    if (searchArea.radius){
+      includeDistance = true;
+    }
+    //if the feature falls within the polygon, add it to a list and add a distance attribute
+    for (var i = 0; i < biblioFeatures.length; i++){
+      var point = new Point(biblioFeatures[i].geometry);
+      if (searchArea.contains(point)){
+        if (searchArea.radius) {
+          var center = new Point(searchArea.center);
+          var distance = geometryEngine.distance(center, point, "miles").toFixed(2);
+          biblioFeatures[i].setAttribute("Distance", distance);
+        }
+        selectedPoints.add(biblioFeatures[i]);
+      }
+     }
+
+    //sort results by distance
+    var sortedGraphics = selectedPoints.graphics.sort(function(a, b){
+      if(parseFloat(a.attributes["Distance"]) > parseFloat(b.attributes["Distance"])){
+        return 1;
+      }
+      else if (parseFloat(a.attributes["Distance"]) < parseFloat(b.attributes["Distance"])){
+        return -1;
+      }
+      else {
+        return 0;
+      }
+    });
+
+    selectedPointsGraphics = sortedGraphics.toArray();
+    //print selected records
+    createRecordDivs(selectedPointsGraphics, includeDistance);
+  } //end QueryPoints
+
+
+  //filter points
+  function filterPoints(selectedList) {
+    biblioFeatures = layer.source.toArray();
+    for (var i = 0; i < biblioFeatures.length; i++) {
+      layer.source.remove(biblioFeatures[i]);
+    }
+    for (var i = 0; i < selectedList.length; i++) {
+      layer.source.add(selectedList[i]);
+    }
+  } //end filterPoints
+
+  //----------------------CREATE BROWSE---------------------------------------
+
+  //for a given field name, get all values of that field, the number of records with
+  //that value, and add them to the given div in the search and browse
+  function createBrowse(divId, fieldName) {
+    var browseDiv = document.getElementById(divId);
+    biblioFeatures = layer.source.toArray();
+    var browseList = [];
+    for (var i = 0; i < biblioFeatures.length; i++) {
+      var browseAttribute = biblioFeatures[i].attributes[fieldName];
+      if (isInArray(browseAttribute, browseList) == false){
+        browseList.push(browseAttribute);
+      }
+    }
+    sortedList = browseList.sort();
+
+    for (var i = 0; i < sortedList.length; i++) {
+      var numberOfRecords = 0;
+      for (var j = 0; j < biblioFeatures.length; j++) {
+        if (biblioFeatures[j].attributes[fieldName] == sortedList[i]) {
+          numberOfRecords ++;
+        }
+      }
+      var div = document.createElement("div");
+      div.innerHTML = "<a href ='#'>" + sortedList[i] + " (" + numberOfRecords + ")</a>";
+      div.id = sortedList[i];
+      browseDiv.appendChild(div);
+    }
+
+    //attach click listeners to sort by language
+    for (var i = 0; i< sortedList.length; i++) {
+      var div = document.getElementById(sortedList[i]);
+      div.addEventListener("click", makeClickCallback2(sortedList[i], fieldName));
+    }
+  } //end createBrowse
+
+  //-------------------------SEARCH RESULT PRINT FUNCTIONS-----------------------
+  //for each selected record, put it in a div that corresponds to its unique id number,
+  //and print its field names and attributes
+  function createRecordDivs(recordList, includeDistance) {
+    selectionTitle.innerHTML = "<b>Selected Articles</b>";
+    allRecords.innerHTML = "";
+    for (var i = 0; i < recordList.length; i++) {
+      var idNo = recordList[i].attributes["IdNo"];
+      var div =  document.createElement("div");
+      if (recordList[i].attributes["IdNo"]) {
+        div.id = "point" + idNo;
+      }
+      if (!recordList[i].attributes["IdNo"]) {
+        div.id = "point0";
+      }
+      div.className = "record";
+      for (var j = 0; j < layer.fields.length; j++) {
+        var fieldName = layer.fields[j].name;
+        var nameReplace = fieldName.replace(/_/g, " ");
+        if (recordList[i].attributes[fieldName]) {
+          div.innerHTML += "<b>" + nameReplace + ":</b> " + recordList[i].attributes[fieldName] + "<br/>";
+        }
+      }
+      if (recordList[i].attributes["Distance"] && includeDistance == true) {
+        div.innerHTML += "<b>Distance:</b> " + recordList[i].attributes["Distance"] + "<br/>";
+      }
+      allRecords.appendChild(div);
+    }
+  } //end createRecordDivs
+
+  //print all records, sorted by English title
+  function printAllRecords() {
+    biblioFeatures = layer.source.toArray();
+    allRecords = document.getElementById("allRecords");
+    allRecords.innerHTML = defaultRecordsHTML;
+    var sortedAll = biblioFeatures.sort(function(a, b){
+      if(a.attributes["Title_English"] > b.attributes["Title_English"]){
+        return 1;
+      }
+      else if (a.attributes["Title_English"] < b.attributes["Title_English"]){
+        return -1;
+      }
+      else {
+        return 0;
+      }
+    });
+
+    createRecordDivs(biblioFeatures2, false);
+    linkRecordsToPopups();
+
+  } //end printAllRecords
+
+  //attach a click listener to each record div that will open its popup
+  function linkRecordsToPopups() {
+    for (var i = 0; i < biblioFeatures2.length; i++){
+      var divName = "point" + i.toString();
+      if (document.getElementById(divName)){
+        document.getElementById(divName).addEventListener("click", makeClickCallback(i, biblioFeatures2))
+      }
+    }
+  } //end linkRecordsToPopups
+
+  //attach click listeners to links in the faceted search and browse to filter
+  //the map and records by search terms
+  function makeClickCallback2(divId, selectField) {
+    function callback2(e){
+      //allRecords = document.getElementById("allRecords");
+      var images = document.getElementsByTagName('image');
+      if (images.length > 0) {
+        for (i = 0; i < images.length; i++) {
+          images[i].parentNode.removeChild(images[i]);
+        }
+      }
+      view.popup.close();
+      allRecords.innerHTML = "";
+      selectionTitle.inenrHTML += "<b>Selected Articles</b>";
+      biblioFeatures = layer.source.toArray();
+      var selectedList = [];
+      var selectionType = document.getElementById("selection_select").value;
+      //if the user has selected new selection, select from all features; if the
+      //user has selected within current selection, select within the layer of currently
+      //selected features
+      if (selectionType == "new") {
+        for (var i = 0; i < biblioFeatures2.length; i++) {
+          if (biblioFeatures2[i].attributes[selectField] == divId){
+            selectedList.push(biblioFeatures2[i]);
+          }
+        }
+      }
+      if (selectionType == "within") {
+        for (var i = 0; i < biblioFeatures.length; i++) {
+          if (biblioFeatures[i].attributes[selectField] == divId){
+            selectedList.push(biblioFeatures[i]);
+          }
+        }
+      }
+
+      createRecordDivs(selectedList, false);
+      filterPoints(selectedList);
+      for (i=0; i < biblioFeatures2.length; i++) {
+        var divName = "point" + biblioFeatures2[i].attributes["IdNo"];
+        if (!biblioFeatures2[i].attributes["IdNo"]) {
+          divName = "point0";
+        }
+        if (document.getElementById(divName)){
+          document.getElementById(divName).addEventListener("click", makeClickCallback(i, biblioFeatures2))
+        }
+      }
+    }
+    return callback2;
+  } //end click callback 2
+
+
+  //open popup when a record div is clicked
+  function makeClickCallback(i, biblioFeatures2) {
+    function callback(e){
+      if (biblioFeatures2[i].attributes["IdNo"] == i) {
+        view.popup = new Popup({
+          title: biblioFeatures2[i].attributes["Title_English"],
+          location: biblioFeatures2[i].geometry,
+          content: ''
+        });
+      }
+      view.popup.open();
+    }
+    return callback;
+  }
+
+  //-------------------------DRAWING FUNCTIONS-----------------------------------
+  function activateDraw(biblioFeatures2) {
+    drawConfig.isDrawActive = true;
+    clearPolygon();
+    pointerDownListener = view.on("pointer-down", function(event) {
+      event.stopPropagation();
+      var point = createPoint(event);
+      addVertex(point);
+    });  //end point down
+
+    pointerMoveListener = view.on("pointer-move", function(event) {
+      if (drawConfig.activePolygon) {
+        event.stopPropagation();
+        var point = createPoint(event);
+        updateFinalVertex(point);
+      }
+    }); //end point move
+
+    //close the polygon and stop drawing on double click
+    doubleClickListener = view.on("double-click", function(event) {
+      event.stopPropagation();
+      var searchArea = addVertex(event.mapPoint, true);
+      if (!searchArea) {
+        return null;
+      }
+      deactivateDraw();
+      drawButton.classList.toggle("esri-draw-button-selected");
+      drawing = false;
+      //select the points that fall within the drawn polygon
+      queryPoints(searchArea);
+      linkRecordsToPopups();
+    }) //end double click
+  }//end activte draw
+
+  //stop drawing
+  function deactivateDraw() {
+    drawConfig.isDrawActive = false;
+    pointerDownListener.remove();
+    pointerMoveListener.remove();
+    doubleClickListener.remove();
+    drawConfig.activePolygon = null;
+
+  } //end deactivate draw
+
+  function createPoint(event) {
+    return view.toMap(event);
+  } //end createPoint
+
+  function addVertex(point, isFinal) {
+    var polygon = drawConfig.activePolygon;
+    var ringLength;
+    if (!polygon) {
+      polygon = new Polygon({
+        spatialReference: {
+          wkid: 3857
+        }
+      });
+      polygon.addRing([point, point]);
+    } else {
+      ringLength = polygon.rings[0].length;
+      polygon.insertPoint(0, ringLength - 1, point);
+    }
+    drawConfig.activePolygon = polygon;
+    return redrawPolygon(polygon, isFinal);
+  }
+
+  //remove the polygon from the map
+  function clearPolygon() {
+    var polygonGraphic = view.graphics.find(function(graphic) {
+      return graphic.geometry.type === "polygon";
+    });
+    if (polygonGraphic) {
+      view.graphics.remove(polygonGraphic);
+    }
+    //clear the list of selected points
+    if (selectedPointsGraphics) {
+      for (var i = selectedPointsGraphics.length - 1; i>-1; i--) {
+        selectedPoints.remove(selectedPointsGraphics[i]);
+      }
+    }
+    //reset the printed records
+    //allRecords.innerHTML = "";
+  } //end clear polygon
+
+  function redrawPolygon(polygon, finished) {
+    var geometry = finished ? geometryEngine.simplify(polygon) :
+    polygon;
+
+    if (!geometry && finished) {
+      console.log(
+        "Cannot finish polygon. It must be a triangle at minimum. Resume drawing..."
+      );
+      return null;
+    }
+
+    clearPolygon();
+
+    var polygonGraphic = new Graphic({
+      geometry: geometry,
+      symbol: finished ? drawConfig.finishedSymbol : drawConfig.drawingSymbol
+    });
+
+    view.graphics.add(polygonGraphic);
+    return geometry;
+  } //end redraw polygon
+
+  function updateFinalVertex(point) {
+    var polygon = drawConfig.activePolygon.clone();
+    var ringLength = polygon.rings[0].length;
+    polygon.insertPoint(0, ringLength - 1, point);
+    redrawPolygon(polygon);
+
+  } //end update final vertex
+
+}); //end all
+
+</script>
+</head>
+<body class="claro">
+  <div id="draw-button" class="esri-widget-button esri-widget esri-interactive" style = "width:100px">
+    <span class="esri-icon-polygon"></span>
+    Draw shape
+  </div>
+  <div id="clear-button" class="esri-widget-button esri-widget esri-interactive" style = "width:100px">
+    Clear selection
+  </div>
+  <div id="point-button" class="esri-widget-button esri-widget esri-interactive" style = "width:100px"> Click map </div>
+  <div id="viewDiv">
+  </div>
+  <select id="distance_select" class="selector">
+    <option value="init">(select search distance)</option>
+    <option value = "20">20 kilometers </option>
+    <option value = "50">50 kilometers </option>
+    <option value = "100">100 kilometers </option>
+    <option value = "200">200 kilometers </option>
+    <option value = "2000">2000 kilometers </option>
+  </select>
+  <div id = "selectionInfo">
+    <div id = "selectionTitle">Welcome to the Turkish Archaeology Geographical Bibliography</div>
+    <br/>
+    <div id = "allRecords"></div>
+  </div>
+  <div id = "search" >
+    <button id = "showAll" class = "searchButton"> Show all </button>
+  </br>
+  <span style = "margin: 8px"> Choose a selection method </span>
+</br>
+  <select id="selection_select" class="searchButton selector">
+    <option value="new">New selection</option>
+    <option value = "within">Within current selection</option>
+  </select>
+  <div class = "category">
+  <div class = "browseClass"> Search by language</div>
+  <div id = "languages" class = "browse"></div>
+</div>
+  <div class = "category">
+  <div class = "browseClass">Search by publication series</div>
+  <div id = "series" class = "browse"></div>
+</div>
+</div>
+</body>
+<script>
+</script>
+</html>

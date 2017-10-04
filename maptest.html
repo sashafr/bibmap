@@ -29,12 +29,13 @@
     "esri/geometry/geometryEngine",
     "esri/widgets/Search",
     "esri/widgets/Popup",
+     "dojo/dom",
     "dojo/domReady!",
     "dojo/ready"
   ],
 
   function(Map, WebMap, MapView, FeatureLayer, Point, Polygon, Circle, Extent, Graphic, Color, SimpleMarkerSymbol, GraphicsLayer, SimpleFillSymbol, SimpleLineSymbol, QueryTask,
-    Query, StatisticDefinition, geometryEngine, Search, Popup){
+    Query, StatisticDefinition, geometryEngine, Search, Popup, dom){
 
       //------------------------------INITIALIZE MAP AND VARIABLES---------------------------------------
       var polygon;
@@ -86,18 +87,21 @@
 
       });
 
+
+
       var searchWidget = new Search({
         view: view,
         resultGraphicEnabled: false,
         popupEnabled: false,
         popupOpenOnSelect: false,
 
+
       });
 
       //Add buttons
       view.ui.add("draw-button", "top-left");
       view.ui.add("point-button", "top-left");
-      view.ui.add("clear-button", "top-left");
+      //view.ui.add("clear-button", "top-left");
       view.ui.add("distance_select", "top-right");
       view.ui.add(searchWidget, {
         position: "top-right",
@@ -119,9 +123,15 @@
           console.log(allLayers[i].id);
         }*/
 
+        //move the search widget into the sidebar
+        //var widget = document.getElementsByClassName("esri-search");
+        //document.getElementById("geocoder").appendChild(widget[0]);
+
         layerID = "csv_4499";
         layer = map.findLayerById(layerID);
         allRecords.innerHTML = defaultRecordsHTML;
+
+        document.getElementById("viewDiv").style.width = "52%";
 
         //uncomment to get the names and indexes of all fields in the layer
         /*for (var i = 0; i < layer.fields.length; i++){
@@ -231,11 +241,13 @@
               images[i].parentNode.removeChild(images[i]);
             }
           }
+          if (searchPoint == true) {
+            document.getElementById("distance_select").selectedIndex = 0;
+          }
           searchPoint = !searchPoint;
           allRecords.innerHTML = "";
           pointButton.classList.toggle("esri-point-button-selected");
           clearPolygon();
-          document.getElementById("distance_select").selectedIndex = 0;
           searchWidget.clear();
           view.popup.close();
           if (drawing == true) {
@@ -246,20 +258,54 @@
           }
         });
 
+        var searchBoxButton = document.getElementById("searchBoxButton");
+        searchBoxButton.addEventListener("click", function() {
+          var searchTerm = document.getElementById("searchInput").value.toLowerCase();
+          var fieldNames = [];
+          for (var i = 0; i < layer.fields.length; i++){
+            fieldNames.push(layer.fields[i].name);
+          }
+          var searchList = [];
+          for (var i = 0; i < biblioFeatures2.length; i++) {
+            for (var j = 0; j < fieldNames.length; j++){
+              var field = fieldNames[j];
+              if (biblioFeatures2[i].attributes[field]) {
+                var fieldString = biblioFeatures2[i].attributes[field].toString().toLowerCase();
+                if (fieldString.indexOf(searchTerm) !== -1 && !isInArray(biblioFeatures2[i], searchList)) {
+                  searchList.push(biblioFeatures2[i]);
+                }
+              }
+            }
+          }
+        //alert(searchList.length);
+        filterPoints(searchList);
+        createRecordDivs(searchList, false);
+        linkRecordsToPopups();
+
+        });
+
         //listen for clicks on the map
         view.on("click", function(evt) {
           //if the search by click button has been selected, search within a certain distance
           //of the click
 
+          if (searchPoint == false) {
+            view.hitTest(evt).then(function(response) {
+                var clickedList = [response.results[0].graphic];
+                createRecordDivs(clickedList, false);
+            }).then();
+          }
+
           if (searchPoint == true) {
+            var searchDistance = document.getElementById("distance_select").value;
             searchWidget.clear();
             view.popup.destroy();
             clearPolygon();
             circle = new Circle({
               center: evt.mapPoint,
               geodesic: false,
-              radius: 300,
-              radiusUnit: "miles"
+              radius: searchDistance,
+              radiusUnit: "kilometers"
             });
             var circleSymb = new SimpleFillSymbol(SimpleFillSymbol.STYLE_NULL,
               new SimpleLineSymbol(
@@ -269,6 +315,7 @@
             view.graphics.add(graphic);
             queryPoints(circle);
             linkRecordsToPopups();
+
 
           } //end if searchPoint true
 
@@ -291,7 +338,7 @@
         center: point2,
         geodesic: false,
         radius: distanceValue,
-        radiusUnit: "miles"
+        radiusUnit: "kilometers"
       });
 
       queryPoints(circle2);
@@ -634,38 +681,49 @@
 </script>
 </head>
 <body class="claro">
-  <div id="draw-button" class="esri-widget-button esri-widget esri-interactive" style = "width:100px">
-    <span class="esri-icon-polygon"></span>
-    Draw shape
-  </div>
-  <div id="clear-button" class="esri-widget-button esri-widget esri-interactive" style = "width:100px">
-    Clear selection
-  </div>
-  <div id="point-button" class="esri-widget-button esri-widget esri-interactive" style = "width:100px"> Click map </div>
+
+<!--  <div id="point-button" class="esri-widget-button esri-widget esri-interactive" style = "width:100px"> Click map </div> -->
   <div id="viewDiv">
   </div>
+  <div id = "selectionInfo">
+    <div id = "selectionTitle">Welcome to the Turkish Archaeology Geographical Bibliography</div>
+    <div id = "allRecords"></div>
+  </div>
+  <div id = "search" >
+    <div id = "allButtons">
+    <div id = "showAll" class = "searchButton allButton esri-widget-button esri-widget esri-interactive"> Show all </div>
+    <div id="clear-button" class="allButton esri-widget-button esri-widget esri-interactive">
+      Clear selection
+    </div>
+  </div>
+  <div id="draw-button" class="esri-widget-button esri-widget esri-interactive">
+    <span class="esri-icon-polygon"></span>
+  </div>
+  <div style = "margin-bottom:10px">
   <select id="distance_select" class="selector">
-    <option value="init">(select search distance)</option>
+    <option value="init">(select distance)</option>
     <option value = "20">20 kilometers </option>
     <option value = "50">50 kilometers </option>
     <option value = "100">100 kilometers </option>
     <option value = "200">200 kilometers </option>
     <option value = "2000">2000 kilometers </option>
   </select>
-  <div id = "selectionInfo">
-    <div id = "selectionTitle">Welcome to the Turkish Archaeology Geographical Bibliography</div>
+  <div id="point-button" class="esri-widget-button esri-widget esri-interactive"><div style = "font-size:30px">&#9900;</div></div>
+</div>
+<br/>
+    <div id = "geocoder"></div>
     <br/>
-    <div id = "allRecords"></div>
-  </div>
-  <div id = "search" >
-    <button id = "showAll" class = "searchButton"> Show all </button>
-  </br>
   <span style = "margin: 8px"> Choose a selection method </span>
 </br>
   <select id="selection_select" class="searchButton selector">
     <option value="new">New selection</option>
     <option value = "within">Within current selection</option>
   </select>
+  <div id="searchBox" style = "margin-left:6px">
+      <input id = "searchInput" type="text" class="searchTerm" placeholder="Enter search term">
+      <button id = "searchBoxButton" type="submit" class="searchButton"> Search
+     </button>
+   </div>
   <div class = "category">
   <div class = "browseClass"> Search by language</div>
   <div id = "languages" class = "browse"></div>

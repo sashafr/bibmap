@@ -244,3 +244,25 @@ input:checked + .slider:before {
 -ms-transform: translateX(26px);
 transform: translateX(26px);
 }
+
+.filterButton {
+  display: none;
+}
+
+#polygonSearchTag {
+  display: none;
+  width: 45%;
+  border: 1px solid #d4d4d4;
+  background: #f5f2e2;
+  margin-left: 4px;
+  padding: 4px;
+
+}
+
+#clearPolygonTag {
+  float: right;
+  width: 10px;
+  height: 10px;
+  color: #b9b5b5;
+
+}

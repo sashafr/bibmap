@@ -55,7 +55,7 @@
       var selectionTitle = document.getElementById("selectionTitle");
       var defaultRecordsHTML = "<div id = 'defaultContent'> This site contains a collection of journal articles related to Turkish archaeology.  You can search by language or jounal title.  " +
       "You can also search by clicking a point or searching an address and selecting a proximity, or by selecting a polygon to search in. </div>";
-      var or1 = true;
+
 
       var drawConfig = {
         drawingSymbol: new SimpleFillSymbol({
@@ -103,7 +103,7 @@
 
       });
 
-      var checkedList;
+      var checkedList = [];
       var nameList;
       //Add buttons
       view.ui.add("draw-button", "top-left");
@@ -119,16 +119,24 @@
       function isInArray(value, array) {
         return array.indexOf(value) > -1;
       }
-
-
+      var clicks = 0;
+      var firstPoint;
+      var secondPoint;
+      var lineSymbol = {
+        type: "simple-line",  // autocasts as new SimpleLineSymbol()
+        color: "lightblue",
+        width: "10px",
+        style: "short-dot"
+      };
+      var line = new Polyline();
       //---------------------------BUTTONS, SELECTORS AND FUNCTION CALLS----------------------
       //fires once the map is loaded.  all map activities must happen here
       view.then(function() {
         //uncomment this to get a list of all the layer ids on the map
         var allLayers = map.allLayers.toArray();
-        for (var i = 0; i < allLayers.length; i++) {
+      /*  for (var i = 0; i < allLayers.length; i++) {
           console.log(allLayers[i].id);
-        }
+        }*/
 
 
         //move the search widget into the sidebar
@@ -174,114 +182,192 @@
       //create an array of all features that won't be changed by adding or removing features
       //from the layer
 
-      var biblioFeatures = layer.source.toArray();
-      for (var i = 0; i < biblioFeatures.length; i++) {
-        biblioFeatures2.push(biblioFeatures[i]);
-      }
+        var biblioFeatures = layer.source.toArray();
+        for (var i = 0; i < biblioFeatures.length; i++) {
+          biblioFeatures2.push(biblioFeatures[i]);
+        }
 
-      biblioFeatures3 = biblioFeatures2;
-      //Popupate the desired divs in the search and browse based on div Id and field
-      createBrowse("Text_langu", "Text_langu", true, biblioFeatures);
-      createBrowse("Publicatio", "Publicatio", true, biblioFeatures);
-
-      document.getElementById("toggleOr").addEventListener("click", function() {
-        or1 = !or1;
-      });
-
-      //add show all button
-      var showAll = document.getElementById("showAll");
-      showAll.addEventListener("click", function(){
-        allRecords.innerHTML = defaultRecordsHTML;
         biblioFeatures3 = biblioFeatures2;
-        printAllRecords();
-        for (i = layer.source.length - 1; i > -1; i--) {
-          layer.source.remove(layer.source.toArray()[i]);
-        }
-        for (i = 0; i < biblioFeatures2.length; i++) {
-          layer.source.add(biblioFeatures2[i]);
+        //Popupate the desired divs in the search and browse based on div Id and field
+        createBrowse("Text_langu", "Text_langu", true, biblioFeatures);
+        createBrowse("Publicatio", "Publicatio", true, biblioFeatures);
+
+        var checkboxes = document.getElementsByClassName("checkbox");
+        var filterButtons = document.getElementsByClassName("filterButton");
+        var browseDivs = document.getElementsByClassName("browse");
+        var checkedList2;
+        var textChecks;
+        var pubChecks;
+        for (var h = 0; h < browseDivs.length; h++) {
+          browseDivs[h].addEventListener("click", function(e){
+            checkedList2 = [];
+            textChecks = 0;
+            pubChecks = 0;
+            for (var i = 0; i < checkboxes.length; i++) {
+              if (checkboxes[i].checked == true) {
+                checkedList2.push(checkboxes[i]);
+              }
+            }
+
+            if (checkedList2.length == 0) {
+              filterButtons[0].style.display = "none";
+              filterButtons[1].style.display = "none";
+              return;
+            }
+
+            for (var i = 0; i < checkedList2.length; i++) {
+              if (checkedList2[i].parentNode.parentNode.id == "Text_langu") {
+                textChecks++;
+              }
+
+              if (checkedList2[i].parentNode.parentNode.id == "Publicatio") {
+                pubChecks++;
+              }
+
+              if (textChecks > 0) {
+                filterButtons[0].style.display = "block";
+              }
+              else {
+                filterButtons[0].style.display = "none";
+              }
+
+              if (pubChecks > 0) {
+                filterButtons[1].style.display = "block";
+              }
+              else{
+                filterButtons[1].style.display = "none";
+              }
+            }
+          });
         }
 
-        createBrowse("languages", "Text_langu", true, biblioFeatures2);
-        createBrowse("series", "Publicatio", true, biblioFeatures2);
-      });
-
-      //clear the selection and reset the map when the clear button is clicked
-      clearButton = document.getElementById("clear-button");
-      clearButton.addEventListener("click", function() {
-        var images = document.getElementsByTagName('image');
-        if (images.length > 0) {
-          for (i = 0; i < images.length; i++) {
-            images[i].parentNode.removeChild(images[i]);
+        var clearPolygonTag = document.getElementById("clearPolygonTag");
+        clearPolygonTag.addEventListener("click", function() {
+          document.getElementById("polygonSearchTag").style.display = "none";
+          //deactivateDraw();
+          clearPolygon();
+          //alert(document.getElementById("searchInput").value);
+          if (checkedList.length == 0 && document.getElementById("searchInput").value.length == 0) {
+            filterPoints(biblioFeatures2);
+            biblioFeatures3 = biblioFeatures2;
           }
-        }
-        clearPolygon();
-        allRecords.innerHTML = defaultRecordsHTML;
-        selectionTitle.innerHTML = "<b>Welcome to the Turkish Archaeology Geographical Bibliography</b>";
-        if (searchPoint == true) {
-          pointButton.classList.toggle("esri-point-button-selected");
-          searchPoint = false;
-        }
-        if (drawing == true) {
-          drawButton.classList.toggle("esri-draw-button-selected");
-          deactivateDraw();
-          drawing = false;
-        }
-        document.getElementById("distance_select").selectedIndex = 0;
-        searchWidget.clear();
-        view.popup.close();
 
-        filterPoints(biblioFeatures2);
-
-        var extent = new Extent({
-          xmin: 20.25,
-          ymin: 23.3,
-          xmax: 55.25,
-          ymax: 55.25
+          if (checkedList.length > 0 && document.getElementById("searchInput").value.length == 0) {
+            biblioFeatures3 = biblioFeatures2;
+            filterByCheckList();
+          }
 
         });
-        view.goTo(extent);
 
-      });
 
-      //start drawing when the draw button is clicked
-      drawButton = document.getElementById("draw-button");
-      drawButton.addEventListener("click", function() {
-        drawing = !drawing;
-        var images = document.getElementsByTagName('image');
-        if (images.length > 0) {
-          for (i = 0; i < images.length; i++) {
-            images[i].parentNode.removeChild(images[i]);
+        //add show all button
+        var showAll = document.getElementById("showAll");
+        showAll.addEventListener("click", function() {
+          document.getElementById("polygonSearchTag").style.display = "none";
+          filterPoints(biblioFeatures2);
+          biblioFeatures3 = biblioFeatures2;
+        });
+
+        //clear the selection and reset the map when the clear button is clicked
+        clearButton = document.getElementById("clear-button");
+        clearButton.addEventListener("click", function() {
+          document.getElementById("polygonSearchTag").style.display = "none";
+          var images = document.getElementsByTagName('image');
+          if (images.length > 0) {
+            for (i = 0; i < images.length; i++) {
+              images[i].parentNode.removeChild(images[i]);
+            }
           }
-        }
-        drawButton.classList.toggle("esri-draw-button-selected");
-        if (searchPoint == true) {
-          pointButton.classList.toggle("esri-point-button-selected");
-          searchPoint = false;
-        }
-        document.getElementById("distance_select").selectedIndex = 0;
-        searchWidget.clear();
-        view.popup.close();
-        if (!drawConfig.isDrawActive) {
-          activateDraw(biblioFeatures2);
-        }
-        else {
-          deactivateDraw();
           clearPolygon();
-        }
-      });
+          allRecords.innerHTML = defaultRecordsHTML;
+          selectionTitle.innerHTML = "<b>Welcome to the Turkish Archaeology Geographical Bibliography</b>";
+          if (searchPoint == true) {
+            pointButton.classList.toggle("esri-point-button-selected");
+            searchPoint = false;
+          }
+          if (drawing == true) {
+            drawButton.classList.toggle("esri-draw-button-selected");
+            deactivateDraw();
+            drawing = false;
+          }
+          document.getElementById("distance_select").selectedIndex = 0;
+          searchWidget.clear();
+          view.popup.close();
 
-      var filterButton = document.getElementById("filter");
-      filterButton.addEventListener("click", function() {
+          filterPoints(biblioFeatures2);
+          biblioFeatures3 = biblioFeatures2;
+
+          /*var extent = new Extent({
+            xmin: 20.25,
+            ymin: 23.3,
+            xmax: 55.25,
+            ymax: 55.25
+
+          });
+          view.goTo(extent);*/
+
+        });
+
+        clearSearchButton = document.getElementById("clearSearchButton");
+        clearSearchButton.addEventListener("click", function (){
+          if (checkedList.length == 0) {
+            document.getElementById("searchInput").value = "";
+            filterPoints(biblioFeatures2);
+          }
+
+          else {
+            document.getElementById("searchInput").value = "";
+            biblioFeatures3 = biblioFeatures2;
+            filterByCheckList();
+
+          }
+
+        });
+
+        //start drawing when the draw button is clicked
+        drawButton = document.getElementById("draw-button");
+        drawButton.addEventListener("click", function() {
+          drawing = !drawing;
+          var images = document.getElementsByTagName('image');
+          if (images.length > 0) {
+            for (i = 0; i < images.length; i++) {
+              images[i].parentNode.removeChild(images[i]);
+            }
+          }
+          drawButton.classList.toggle("esri-draw-button-selected");
+          if (searchPoint == true) {
+            pointButton.classList.toggle("esri-point-button-selected");
+            searchPoint = false;
+          }
+          document.getElementById("distance_select").selectedIndex = 0;
+          searchWidget.clear();
+          view.popup.close();
+          if (!drawConfig.isDrawActive) {
+            activateDraw(biblioFeatures2);
+          }
+          else {
+          //  alert("not active");
+            deactivateDraw();
+            clearPolygon();
+          }
+        });
+
+        function filterByCheckList() {
+
         checkedList = [];
         var filterList = [];
         var checkboxes = document.getElementsByClassName("checkbox");
-        //alert(checkboxes.length);
-
+        //if a previous checked list is being "remembered", use that instead
+        if (checkedList2.length > 0) {
+          checkedList = checkedList2;
+        }
+        else {
         for (var i = 0; i < checkboxes.length; i++) {
           if (checkboxes[i].checked == true) {
             checkedList.push(checkboxes[i]);
           }
         }
+      }
         if (checkedList.length == 0) {
           return;
         }
@@ -290,10 +376,7 @@
           if (!isInArray(checkedList[i].name, nameList)){
             nameList.push(checkedList[i].name);
           }
-
         }
-
-
 
         if (nameList.length == 1) {
           for (var i = 0; i <biblioFeatures3.length; i++) {
@@ -323,183 +406,240 @@
             }
             listOfLists.push(selectedList);
           }
+          var list2 = listOfLists[1];
+          for (i = 0; i <list2.length; i++) {
+            if (isInArray(list2[i], listOfLists[0])){
+              filterList.push(list2[i]);
+            }
+          }
+        }
+      //  alert(filterList.length);
+        biblioFeatures3 = filterList;
 
-          if (or1 == true) {
-            for (var i = 0; i < listOfLists.length; i++) {
-              var list = listOfLists[i];
-              for (var j = 0; j <list.length;j++) {
-                if (!isInArray(list[j], filterList)) {
-                  filterList.push(list[j]);
+        //the current checklist will be remembered if non-checklist filter methods are used
+        //subsequently
+        checkedList2 = checkedList;
+      filterPoints(filterList);
+      createRecordDivs(filterList, false);
+      linkRecordsToPopups();
+
+      var checkedBoxes = document.getElementsByClassName("checkbox");
+
+      for (var i = 0; i < checkedBoxes.length; i++) {
+        for (var j = 0; j < checkedList.length; j++) {
+          if (checkedBoxes[i].id == checkedList[j].id) {
+            //alert("checking");
+            checkedBoxes[i].checked = true;
+          }
+        }
+      }
+    }
+
+        var filterButtons = document.getElementsByClassName("filterButton");
+        for (var i = 0; i < filterButtons.length; i++) {
+
+         filterButton = filterButtons[i];
+          filterButton.addEventListener("click", function() {
+            filterByCheckList();
+          /*  checkedList = [];
+            var filterList = [];
+            var checkboxes = document.getElementsByClassName("checkbox");
+
+            for (var i = 0; i < checkboxes.length; i++) {
+              if (checkboxes[i].checked == true) {
+                checkedList.push(checkboxes[i]);
+              }
+            }
+            if (checkedList.length == 0) {
+              return;
+            }
+            var nameList = [];
+            for (var i = 0; i < checkedList.length; i++) {
+              if (!isInArray(checkedList[i].name, nameList)){
+                nameList.push(checkedList[i].name);
+              }
+            }
+
+            if (nameList.length == 1) {
+              for (var i = 0; i <biblioFeatures3.length; i++) {
+                for (var j = 0; j < checkedList.length; j++) {
+                  var field = nameList[0];
+                  var value = checkedList[j].id;
+                  if (biblioFeatures3[i].attributes[field] == value && !isInArray(biblioFeatures3[i], filterList)){
+                    filterList.push(biblioFeatures3[i]);
+                  }
                 }
               }
             }
-          }
 
-          if (or1 == false) {
-            var list2 = listOfLists[1];
-            for (i = 0; i <list2.length; i++) {
-              if (isInArray(list2[i], listOfLists[0])){
-                filterList.push(list2[i]);
+            if (nameList.length > 1) {
+              var listOfLists = [];
+              var biblioFeatures = layer.source.toArray();
+              for (var h = 0; h < nameList.length; h++) {
+                var selectedList = [];
+                for (var i = 0; i <biblioFeatures3.length; i++) {
+                  for (var j = 0; j < checkedList.length; j++) {
+                    var field = nameList[h];
+                    var value = checkedList[j].id;
+                    if (biblioFeatures3[i].attributes[field] == value && !isInArray(biblioFeatures3[i], selectedList)){
+                      selectedList.push(biblioFeatures3[i]);
+                    }
+                  }
+                }
+                listOfLists.push(selectedList);
+              }
+              var list2 = listOfLists[1];
+              for (i = 0; i <list2.length; i++) {
+                if (isInArray(list2[i], listOfLists[0])){
+                  filterList.push(list2[i]);
+                }
               }
             }
-          }
+
+          filterPoints(filterList);
+          createRecordDivs(filterList, false);
+          linkRecordsToPopups();
+
+          var checkedBoxes = document.getElementsByClassName("checkbox");
+
+          for (var i = 0; i < checkedBoxes.length; i++) {
+            for (var j = 0; j < checkedList.length; j++) {
+              if (checkedBoxes[i].id == checkedList[j].id) {
+                //alert("checking");
+                checkedBoxes[i].checked = true;
+              }
+            }
+          }*/
+        });
+      }
+
+    //select by point when the user clicks on the map
+    pointButton = document.getElementById("point-button");
+    pointButton.addEventListener("click", function() {
+      if (searchPoint == false) {
+        activateDraw(biblioFeatures2);
+      }
+      //this is the only way to get rid of the graphic created by the geosearch
+      var images = document.getElementsByTagName('image');
+      if (images.length > 0) {
+        for (i = 0; i < images.length; i++) {
+          images[i].parentNode.removeChild(images[i]);
         }
+      }
+      if (searchPoint == true) {
+        document.getElementById("distance_select").selectedIndex = 0;
+        clearPolygon();
+      }
+      searchPoint = !searchPoint;
+      allRecords.innerHTML = "";
+      pointButton.classList.toggle("esri-point-button-selected");
+      searchWidget.clear();
+      view.popup.close();
+      if (drawing == true) {
+        drawButton.classList.toggle("esri-draw-button-selected");
+        drawing = false;
+      }
+    });
 
-        filterPoints(filterList);
-        createRecordDivs(filterList, false);
-        linkRecordsToPopups();
-
-        var checkedBoxes = document.getElementsByClassName("checkbox");
-
-        for (var i = 0; i < checkedBoxes.length; i++) {
-          for (var j = 0; j < checkedList.length; j++) {
-            if (checkedBoxes[i].id == checkedList[j].id) {
-              //alert("checking");
-              checkedBoxes[i].checked = true;
+    var searchBoxButton = document.getElementById("searchBoxButton");
+    searchBoxButton.addEventListener("click", function() {
+      var searchTerm = document.getElementById("searchInput").value.toLowerCase();
+      var fieldNames = [];
+      for (var i = 0; i < layer.fields.length; i++){
+        fieldNames.push(layer.fields[i].name);
+      }
+      var searchList = [];
+      for (var i = 0; i < biblioFeatures2.length; i++) {
+        for (var j = 0; j < fieldNames.length; j++){
+          var field = fieldNames[j];
+          if (biblioFeatures2[i].attributes[field]) {
+            var fieldString = biblioFeatures2[i].attributes[field].toString().toLowerCase();
+            if (fieldString.indexOf(searchTerm) !== -1 && !isInArray(biblioFeatures2[i], searchList)) {
+              searchList.push(biblioFeatures2[i]);
             }
           }
         }
-});
-
-//select by point when the user clicks on the map
-pointButton = document.getElementById("point-button");
-pointButton.addEventListener("click", function() {
-  if (searchPoint == false) {
-    activateDraw(biblioFeatures2);
-  }
-  //this is the only way to get rid of the graphic created by the geosearch
-  var images = document.getElementsByTagName('image');
-  if (images.length > 0) {
-    for (i = 0; i < images.length; i++) {
-      images[i].parentNode.removeChild(images[i]);
-    }
-  }
-  if (searchPoint == true) {
-    //  alert("deactivating");
-    document.getElementById("distance_select").selectedIndex = 0;
-    // deactivateDraw();
-    clearPolygon();
-  }
-  searchPoint = !searchPoint;
-  allRecords.innerHTML = "";
-  pointButton.classList.toggle("esri-point-button-selected");
-  //clearPolygon();
-  searchWidget.clear();
-  view.popup.close();
-  if (drawing == true) {
-    drawButton.classList.toggle("esri-draw-button-selected");
-    drawing = false;
-    //deactivateDraw();
-
-  }
-});
-
-var searchBoxButton = document.getElementById("searchBoxButton");
-searchBoxButton.addEventListener("click", function() {
-  var searchTerm = document.getElementById("searchInput").value.toLowerCase();
-  var fieldNames = [];
-  for (var i = 0; i < layer.fields.length; i++){
-    fieldNames.push(layer.fields[i].name);
-  }
-  var searchList = [];
-  for (var i = 0; i < biblioFeatures2.length; i++) {
-    for (var j = 0; j < fieldNames.length; j++){
-      var field = fieldNames[j];
-      if (biblioFeatures2[i].attributes[field]) {
-        var fieldString = biblioFeatures2[i].attributes[field].toString().toLowerCase();
-        if (fieldString.indexOf(searchTerm) !== -1 && !isInArray(biblioFeatures2[i], searchList)) {
-          searchList.push(biblioFeatures2[i]);
-        }
       }
-    }
-  }
-  filterPoints(searchList);
-  createRecordDivs(searchList, false);
-  linkRecordsToPopups();
-});
-
-var clicks = 0;
-var firstPoint;
-var secondPoint;
-var lineSymbol = {
-  type: "simple-line",  // autocasts as new SimpleLineSymbol()
-  color: "lightblue",
-  width: "10px",
-  style: "short-dot"
-};
-var line = new Polyline();
-//listen for clicks on the map
-view.on("click", function(evt) {
-
-  //if the search by click button is not selected and the user clicks on a feature, open its popup and record
-  if (searchPoint == false) {
-    // popupTemplate.setContent(popupContent);
-    //deactivateDraw();
-    //clearPolygon();
-    //evt.stopPropagation();
-    /*  view.hitTest(evt).then(function(response) {
-    var clickedList = [response.results[0].graphic];
-
-    /*view.popup.open({
-    /*title: clickedList[0].attributes["Title_Engl"],
-    title: "title",
-    location: evt.mapPoint,
-    content: ''
-  });
-  //  view.popup.open();
-  createRecordDivs(clickedList, false);
-}).then();*/
-}
-
-//if the search by click button has been selected, search within a certain distance
-//of the click
-
-
-if (searchPoint == true) {
-  clicks++;
-  var searchDistance = document.getElementById("distance_select").value;
-  searchWidget.clear();
-  view.popup.destroy();
-  if (clicks == 1 && searchPoint == true) {
-    firstPoint = evt.mapPoint;
-    line.addPath([firstPoint]);
-    return;
-  }
-
-  if (clicks == 2 && searchPoint == true) {
-    deactivateDraw();
-    clearPolygon();
-    pointButton.classList.toggle("esri-point-button-selected");
-    searchPoint = false;
-    secondPoint = evt.mapPoint;
-    line.addPath([secondPoint]);
-    line.spatialReference = view.spatialReference;
-    view.graphics.add(new Graphic(line, lineSymbol));
-    var lineDistance = geometryEngine.distance(firstPoint,secondPoint, "kilometers");
-    circle = new Circle({
-      center: firstPoint,
-      geodesic: false,
-      radius: lineDistance,
-      radiusUnit: "kilometers"
+      biblioFeatures3 = searchList;
+      filterPoints(searchList);
+      createRecordDivs(searchList, false);
+      linkRecordsToPopups();
     });
-    var circleSymb = new SimpleFillSymbol(SimpleFillSymbol.STYLE_NULL,
-      new SimpleLineSymbol(
-        SimpleLineSymbol.STYLE_SHORTDASHDOTDOT,
-        new Color([105, 105, 105]),2), new Color([255, 255, 0, 0.25]));
-        var graphic = new Graphic(circle, circleSymb);
-        view.graphics.add(graphic);
-        queryPoints(circle);
-        linkRecordsToPopups();
 
-        clicks = 0;
 
+    //listen for clicks on the map
+    view.on("click", function(evt) {
+
+      //if the search by click button is not selected and the user clicks on a feature, open its popup and record
+      if (searchPoint == false) {
+        // popupTemplate.setContent(popupContent);
+        //deactivateDraw();
+        //clearPolygon();
+        //evt.stopPropagation();
+        /*  view.hitTest(evt).then(function(response) {
+        var clickedList = [response.results[0].graphic];
+
+        /*view.popup.open({
+        /*title: clickedList[0].attributes["Title_Engl"],
+        title: "title",
+        location: evt.mapPoint,
+        content: ''
+      });
+      //  view.popup.open();
+      createRecordDivs(clickedList, false);
+    }).then();*/
+    }
+
+    //if the search by click button has been selected, search within a certain distance
+    //of the click
+
+
+    if (searchPoint == true) {
+      clicks++;
+      var searchDistance = document.getElementById("distance_select").value;
+      searchWidget.clear();
+      view.popup.destroy();
+      if (clicks == 1 && searchPoint == true) {
+        firstPoint = evt.mapPoint;
+        line.addPath([firstPoint]);
         return;
       }
-  } //end if searchPoint true
 
-});
+      if (clicks == 2 && searchPoint == true) {
+        completeCircle(evt.mapPoint);
+        /*deactivateDraw();
+        clearPolygon();
+        pointButton.classList.toggle("esri-point-button-selected");
+        searchPoint = false;
+        secondPoint = evt.mapPoint;
+        line.addPath([secondPoint]);
+        line.spatialReference = view.spatialReference;
+        view.graphics.add(new Graphic(line, lineSymbol));
+        var lineDistance = geometryEngine.distance(firstPoint,secondPoint, "kilometers");
+        circle = new Circle({
+          center: firstPoint,
+          geodesic: false,
+          radius: lineDistance,
+          radiusUnit: "kilometers"
+        });
+        var circleSymb = new SimpleFillSymbol(SimpleFillSymbol.STYLE_NULL,
+          new SimpleLineSymbol(
+            SimpleLineSymbol.STYLE_SHORTDASHDOTDOT,
+            new Color([105, 105, 105]),2), new Color([255, 255, 0, 0.25]));
+            var graphic = new Graphic(circle, circleSymb);
+            view.graphics.add(graphic);
+            queryPoints(circle);
+            linkRecordsToPopups();
 
-});  //end view.then
+            clicks = 0;
+
+            return;*/
+          }
+        } //end if searchPoint true
+
+      });
+
+    });  //end view.then
 
 //----------------------------SEARCH WIDGET-------------------------------------
 searchWidget.on("search-complete", function(data) {
@@ -524,6 +664,8 @@ searchWidget.on("search-complete", function(data) {
 
 //-------------------------SEARCH FUNCTIONS------------------------------------
 
+
+
 //select points within a circle or polygon
 function queryPoints(searchArea) {
   biblioFeatures = layer.source.toArray();
@@ -546,9 +688,19 @@ function queryPoints(searchArea) {
       selectedList.push(biblioFeatures[i]);
     }
   }
-  createBrowse("Text_langu", "Text_langu", false, selectedList);
+createBrowse("Text_langu", "Text_langu", false, selectedList);
   createBrowse("Publicatio", "Publicatio", false, selectedList);
-  biblioFeatures3 = selectedList;
+  var checkedBoxes = document.getElementsByClassName("checkbox");
+
+  for (var i = 0; i < checkedBoxes.length; i++) {
+    for (var j = 0; j < checkedList.length; j++) {
+      if (checkedBoxes[i].id == checkedList[j].id) {
+        //alert("checking");
+        checkedBoxes[i].checked = true;
+      }
+    }
+  }
+  //biblioFeatures3 = selectedList;
   //sort results by distance
   var sortedGraphics = selectedPoints.graphics.sort(function(a, b){
     if(parseFloat(a.attributes["Distance"]) > parseFloat(b.attributes["Distance"])){
@@ -565,6 +717,7 @@ function queryPoints(searchArea) {
   selectedPointsGraphics = sortedGraphics.toArray();
   //print selected records
   createRecordDivs(selectedPointsGraphics, includeDistance);
+  document.getElementById("polygonSearchTag").style.display = "block";
 } //end QueryPoints
 
 
@@ -581,8 +734,9 @@ function filterPoints(selectedList) {
   for (var i = 0; i < browse.length; i++) {
     browse[i].innerHTML = "";
   }
-  createBrowse("Text_langu", "Text_langu", true, biblioFeatures);
-  createBrowse("Publicatio", "Publicatio", true, biblioFeatures);
+  var polygonGraphic = view.graphics.length;
+  createBrowse("Text_langu", "Text_langu", true, biblioFeatures3);
+  createBrowse("Publicatio", "Publicatio", true, biblioFeatures3);
 } //end filterPoints
 
 //----------------------CREATE BROWSE---------------------------------------
@@ -643,8 +797,8 @@ function createBrowse(divId, fieldName, useLayer, selectedFeatures) {
 
     var div = document.getElementById(sortedList[i]);
 
-}
-browseDiv.innerHTML += "</form>";
+  }
+  browseDiv.innerHTML += "</form>";
 
 } //end createBrowse
 
@@ -654,6 +808,10 @@ browseDiv.innerHTML += "</form>";
 function createRecordDivs(recordList, includeDistance) {
   selectionTitle.innerHTML = "<b>Selected Articles</b>";
   allRecords.innerHTML = "";
+  if (recordList.length == 0) {
+    allRecords.innerHTML = "<br/> No results matched your search.  Please search again.";
+    return;
+  }
   for (var i = 0; i < recordList.length; i++) {
     var idNo = recordList[i].attributes["IdNo"];
     var div =  document.createElement("div");
@@ -729,24 +887,18 @@ function makeClickCallback2(divId, selectField) {
     selectionTitle.inenrHTML += "<b>Selected Articles</b>";
     biblioFeatures = layer.source.toArray();
     var selectedList = [];
-    var selectionType = document.getElementById("selection_select").value;
+
     //if the user has selected new selection, select from all features; if the
     //user has selected within current selection, select within the layer of currently
     //selected features
-    if (selectionType == "new") {
-      for (var i = 0; i < biblioFeatures2.length; i++) {
-        if (biblioFeatures2[i].attributes[selectField] == divId){
-          selectedList.push(biblioFeatures2[i]);
-        }
+
+
+    for (var i = 0; i < biblioFeatures.length; i++) {
+      if (biblioFeatures[i].attributes[selectField] == divId){
+        selectedList.push(biblioFeatures[i]);
       }
     }
-    if (selectionType == "within") {
-      for (var i = 0; i < biblioFeatures.length; i++) {
-        if (biblioFeatures[i].attributes[selectField] == divId){
-          selectedList.push(biblioFeatures[i]);
-        }
-      }
-    }
+
 
     createRecordDivs(selectedList, false);
     //  linkRecordsToPopups();
@@ -804,6 +956,10 @@ function activateDraw(biblioFeatures2) {
 
   //close the polygon and stop drawing on double click
   doubleClickListener = view.on("double-click", function(event) {
+    if (searchPoint == true) {
+      completeCircle(event.mapPoint);
+    }
+    else {
     event.stopPropagation();
     var searchArea = addVertex(event.mapPoint, true);
     if (!searchArea) {
@@ -815,12 +971,12 @@ function activateDraw(biblioFeatures2) {
     //select the points that fall within the drawn polygon
     queryPoints(searchArea);
     linkRecordsToPopups();
+}
   }) //end double click
 }//end activte draw
 
 //stop drawing
 function deactivateDraw() {
-
   drawConfig.isDrawActive = false;
   pointerDownListener.remove();
   pointerMoveListener.remove();
@@ -854,6 +1010,7 @@ function addVertex(point, isFinal) {
 
 //remove the polygon from the map
 function clearPolygon() {
+//  alert("clearing");
   var polygonGraphic = view.graphics.find(function(graphic) {
     return graphic.geometry.type === "polygon";
   });
@@ -901,6 +1058,39 @@ function updateFinalVertex(point) {
 
 } //end update final vertex
 
+function completeCircle(secondPoint) {
+  deactivateDraw();
+  clearPolygon();
+  pointButton.classList.toggle("esri-point-button-selected");
+  searchPoint = false;
+  secondPoint = secondPoint;
+  line.addPath([secondPoint]);
+  line.spatialReference = view.spatialReference;
+  view.graphics.add(new Graphic(line, lineSymbol));
+  var lineDistance = geometryEngine.distance(firstPoint,secondPoint, "kilometers");
+  circle = new Circle({
+    center: firstPoint,
+    geodesic: false,
+    radius: lineDistance,
+    radiusUnit: "kilometers"
+  });
+  var circleSymb = new SimpleFillSymbol(SimpleFillSymbol.STYLE_NULL,
+    new SimpleLineSymbol(
+      SimpleLineSymbol.STYLE_SHORTDASHDOTDOT,
+      new Color([105, 105, 105]),2), new Color([255, 255, 0, 0.25]));
+      var graphic = new Graphic(circle, circleSymb);
+      view.graphics.add(graphic);
+      queryPoints(circle);
+      linkRecordsToPopups();
+
+      clicks = 0;
+
+      return;
+
+
+
+}
+
 }); //end all
 
 </script>
@@ -941,33 +1131,28 @@ function updateFinalVertex(point) {
     <br/>
     <span style = "margin: 8px"> Choose a selection method </span>
   </br>
-  <select id="selection_select" class="searchButton selector">
-    <option value="new">New selection</option>
-    <option value = "within">Within current selection</option>
-  </select>
+
   <div id="searchBox" style = "margin-left:6px">
     <input id = "searchInput" type="text" class="searchTerm" placeholder="Enter search term">
     <button id = "searchBoxButton" type="submit" class="searchButton"> Search
     </button>
+    <button id = "clearSearchButton" type="submit" class="searchButton"> Clear
+    </button>
+  </div>
+  <div id = "polygonSearchTag">
+    <span> Geometry search </span>
+    <div id = "clearPolygonTag" style = "width:10px; height: 10px"><a href = "#" style = "color:#b9b5b5"> &#10761; </a></div>
   </div>
   <div class = "category">
     <div class = "browseClass"> Search by language</div>
     <div id = "Text_langu" class = "browse"></div>
   </div>
-  <div id = "toggle">
-    <div class="layerText">Or</div>
-    <label class="switch" style = "vertical-align:middle">
-      <input type="checkbox">
-      <span id = "toggleOr" class="slider">
-      </span>
-    </label>
-    <div class="layerText" >And</div>
-  </div>
+  <button type="button" class = "filterButton" id = "filter1">Search</button>
   <div class = "category">
     <div class = "browseClass">Search by publication series</div>
     <div id = "Publicatio" class = "browse"></div>
   </div>
-  <button type="button" id = "filter">Search</button>
+  <button type="button" class = "filterButton" id = "filter2">Search</button>
 </div>
 </body>
 <script>

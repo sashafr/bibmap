@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title></title>
- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
   <link rel="stylesheet" href="https://js.arcgis.com/4.4/esri/css/main.css">
   <link rel="stylesheet" href="style.css">
   <script src="https://js.arcgis.com/4.4/"></script>
@@ -36,14 +36,13 @@
     "esri/widgets/Popup",
     "esri/PopupTemplate",
     "esri/core/watchUtils",
-    "esri/renderers/SimpleRenderer",
     "dojo/dom",
     "dojo/domReady!",
     "dojo/ready"
   ],
 
   function(Map, WebMap, MapView, FeatureLayer, Point, Polygon, Circle, Polyline, SpatialReference, Extent, Graphic, Color, SimpleMarkerSymbol, GraphicsLayer, SimpleFillSymbol, SimpleLineSymbol, QueryTask,
-    Query, StatisticDefinition, geometryEngine, Search, Popup, PopupTemplate, watchUtils, SimpleRenderer, dom){
+    Query, StatisticDefinition, geometryEngine, Search, Popup, PopupTemplate, watchUtils, dom){
 
       //------------------------------INITIALIZE MAP AND VARIABLES---------------------------------------
       var polygon;
@@ -170,7 +169,6 @@
 //-----------------------------FUNCTIONS ASSOCIATED WITH THE VIEW-----------------------------------------
   //zoom to selected features, or zoom to the full extent of all layers if there are no selected features
       function zoomToLayer() {
-       //alert("zooming");
         smallestX = 100000000;
         smallestY = 100000000;
         biggestX = 0;
@@ -234,7 +232,7 @@
         var xMargin = (biggestX - smallestX) * 0.25;
         var yMargin = (biggestY - smallestY) * 0.25;
         var extent = new Extent({
-          xmin: smallestX - (2 * xMargin),
+          xmin: smallestX - xMargin,
           ymin: smallestY - yMargin,
           xmax: biggestX + xMargin,
           ymax: biggestY + yMargin,
@@ -248,79 +246,23 @@
 
 //every time the map zooms, update the layers being used to either points or polygons
 //depending on the scale
-var centroidsVisible = true;
-var polygonVisLevel;
-
-highFillSymbol = new SimpleFillSymbol({
-color: [255, 139, 0, 0],
-outline: { // autocasts as new SimpleLineSymbol()
- color: [255, 139, 0],
- width: 2
-}
-});
+     watchUtils.whenTrue(view, "stationary", function() {
+       if (centroidLayer && view.scale > centroidLayer.maxScale) {
+         listOfLayers = [];
+         listOfLayers.push(centroidLayer);
+         listOfLayers.push(centroidLayer2);
+       }
+      if (layer && view.scale < layer.minScale) {
+         listOfLayers = [];
+         listOfLayers.push(layer);
+         listOfLayers.push(layer2);
+       }
+     });
 
 
       //---------------------------BEGIN VIEW.THEN----------------------
       //fires once the map is loaded.  all map activities must happen here
       view.then(function() {
-
-
-        watchUtils.whenTrue(view, "stationary", function() {
-          //alert(centroidsVisible);
-        //alert(polygonVisLevel);
-        //alert(Object.keys(layer.source));
-
-          if (centroidLayer && view.scale > 750000) {
-            //alert("centroids");
-          //  listOfLayers = [];
-            //listOfLayers.push(centroidLayer);
-            //listOfLayers.push(centroidLayer2);
-            /*if (centroidsVisible == false) {
-            filterByAll();
-            //scentroidsVisible = true;
-          }*/
-
-
-
-        //  layer = centroidLayer;
-        //  layerArray = layer.source.toArray();
-          //console.log(layer.renderer);
-
-          var symbol = new SimpleMarkerSymbol();
-          symbol.style = SimpleMarkerSymbol.STYLE_SQUARE;
-          symbol.size = 8;
-          symbol.color = new Color([255,255,0,0.5]);
-          var renderer2 = new SimpleRenderer();
-          renderer2.symbol = symbol;
-          console.log(renderer2);
-          layer.renderer = renderer2;
-
-          /*for (var i = 0; i < layerArray.length; i++) {
-            graphic.symbol = highfillSymbol;
-            graphic.geometry.centroid = layerArray[i].geometry;
-            layer.source.add(graphic);
-        //  console.log(layerArray[i].symbol);
-      }*/
-      console.log(layer.renderer);
-          }
-         if (layer && view.scale < 750000) {
-
-           var renderer3 = new SimpleRenderer();
-           renderer3.symbol = highFillSymbol;
-           layer.renderer = renderer3;
-
-           //alert("polygons");
-            /*listOfLayers = [];
-            listOfLayers.push(polygonLayer1);
-            listOfLayers.push(polygonLayer2);
-            if (centroidsVisible == true) {
-
-            reFilter();
-           centroidsVisible = false;
-           return;
-         }*/
-          }
-        });
   //---------------------------DEFINE LAYERS AND FIELDS-------------------------------
         var allLayers = map.allLayers.toArray();
         resultsShowing = false;
@@ -337,15 +279,12 @@ outline: { // autocasts as new SimpleLineSymbol()
 
       layer1 = map.findLayerById(layerID);
       layer2 = map.findLayerById(layerID2);
-      polygonLayer1 = map.findLayerById(layerID);
-      polygonLayer2 = map.findLayerById(layerID2);
       centroidLayer = map.findLayerById(centroidLayerID);
       centroidLayer2 = map.findLayerById(centroidLayerID2);
-      polygonVisLevel = layer1.minScale;
 
       //create a list of all layers on the map
-      listOfLayers.push(polygonLayer1);
-      listOfLayers.push(polygonLayer2);
+      listOfLayers.push(layer1);
+      listOfLayers.push(layer2);
       listOfCentroids.push(centroidLayer);
       listOfCentroids.push(centroidLayer2);
       layer = layer1;
@@ -379,7 +318,6 @@ outline: { // autocasts as new SimpleLineSymbol()
       volume = layer.fields[4].name;
       number = layer.fields[5].name;
       uniqueID = layer.fields[2].name;
-
 
 
       //---------------------------ATTACH LISTENERS TO BUTTONS AND SELECTORS----------------------
@@ -433,23 +371,18 @@ outline: { // autocasts as new SimpleLineSymbol()
         });
       });
 
-     document.getElementById("innerSearch").style.display = "block";
      document.getElementById("hideSearch").addEventListener("click", function() {
-
-        if (document.getElementById("innerSearch").style.display == "block") {
-
-          document.getElementById("innerSearch").style.display = "none";
-          //document.getElementById("viewDiv").style.width = "99%";
+        if (document.getElementById("search").style.width == "26%") {
+          document.getElementById("search").style.width = "0%";
+          document.getElementById("viewDiv").style.width = "99%";
           document.getElementById("hideSearch").innerHTML = "Show";
-          document.getElementById("hideSearcha").style.left = "2%";
           return;
         }
 
-        if (document.getElementById("innerSearch").style.display == "none") {
-          document.getElementById("innerSearch").style.display = "block";
-          //document.getElementById("viewDiv").style.width = "73%";
+        if (document.getElementById("search").style.width == "0%") {
+          document.getElementById("search").style.width = "26%";
+          document.getElementById("viewDiv").style.width = "73%";
           document.getElementById("hideSearch").innerHTML = "Hide";
-          document.getElementById("hideSearcha").style.left = "98%";
           return;
         }
       });
@@ -624,38 +557,13 @@ outline: { // autocasts as new SimpleLineSymbol()
             if (biblioFeatures[i].attributes[language] == "French" || biblioFeatures[i].attributes[language] == "German"){
               biblioFeatures[i].setAttribute("MainTitle", biblioFeatures[i].attributes[otherTitle]);
             }
-
-            var popupContent;
-            popupContent = "<b> Authors: </b>";
-           var firstAuthor = listOfAuthorFields[0];
-            if (biblioFeatures[i].attributes[firstAuthor]) {
-              popupContent += biblioFeatures[i].attributes[firstAuthor];
-            }
-            for (var j = 1; j < listOfAuthorFields.length; j++) {
-              var authorField = listOfAuthorFields[j];
-              if (biblioFeatures[i].attributes[authorField] && biblioFeatures[i].attributes[authorField] != " "){
-                popupContent += ", " + biblioFeatures[i].attributes[authorField];
-              }
-            }
-            popupContent += "<br/>";
-            if (biblioFeatures[i].attributes[publication]) {
-              popupContent += "<b>Publication: </b>" + biblioFeatures[i].attributes[publication] + "<br/>";
-            }
-
-
-            if (biblioFeatures[i].attributes[pageStart]) {
-                popupContent += "Text starts on page " + biblioFeatures[i].attributes[pageStart];
-            }
-
-            biblioFeatures[i].setAttribute("PopupContent", popupContent);
-
             biblioFeatures2.push(biblioFeatures[i]);
             biblioFeaturesLayer.push(biblioFeatures[i]);
           }
           var popupTemplate = new PopupTemplate();
           layer.popupTemplate = popupTemplate;
           popupTemplate.title = "{MainTitle}";
-          popupTemplate.content = "{PopupContent}";
+          popupTemplate.content = "test";
           listOfBiblioFeatures2.push(biblioFeaturesLayer);
         }
 
@@ -676,7 +584,7 @@ outline: { // autocasts as new SimpleLineSymbol()
             var popupTemplate = new PopupTemplate();
             centroid.popupTemplate = popupTemplate;
             popupTemplate.title = "{MainTitle}";
-            popupTemplate.content = "{PopupContent}";
+            popupTemplate.content = "test";
         }
 
         biblioFeatures3 = biblioFeatures2;
@@ -707,91 +615,8 @@ outline: { // autocasts as new SimpleLineSymbol()
 
 //------------------------------FILTER FUNCTIONS------------------------------
 
-
-        function reFilter() {
-        //  alert(biblioFeatures3.length);
-
-        if (view.scale < polygonVisLevel) {
-           listOfLayers = [];
-           listOfLayers.push(polygonLayer1);
-           listOfLayers.push(polygonLayer2);
-         }
-        // alert(polygonLayer.id);
-
-          var refilterList = [];
-          for (var h = 0; h < listOfLayers.length; h++) {
-          //  alert(listOfLayers[h].id);
-            var polygonLayer = listOfLayers[h];
-            var polygonLayerFeatures = polygonLayer.source.toArray();
-          for (var i = 0; i < biblioFeatures3.length; i++) {
-          //  alert(biblioFeatures3[i].attributes[uniqueID]);
-            for (var j = 0; j < polygonLayerFeatures.length; j++) {
-
-              if (polygonLayerFeatures[j].attributes[uniqueID] == biblioFeatures3[i].attributes[uniqueID]) {
-                refilterList.push(polygonLayerFeatures[j]);
-
-              }
-
-          }
-        }
-      }
-
-
-
-        //  alert(refilterList.length);
-        reFilterByList(refilterList);
-
-        //  alert("refiltering");
-          /*biblioFeatures3 = biblioFeatures2;
-          if (view.scale < polygonVisLevel) {
-            alert("polygons");
-            alert("layer 1 is" + layer.id);
-            alert(layer2.id);
-             listOfLayers = [];
-             listOfLayers.push(layer);
-             listOfLayers.push(layer2);
-           }
-
-           for (h = 0; h < listOfLayers.length; h++) {
-             alert(h);
-             layer = listOfLayers[h];
-             alert(layer.id);
-             var biblioFeaturesLayer = [];
-             var biblioFeatures3 = layer.source.toArray();
-
-          checkedList = [];
-          var filterList = [];
-          var checkboxes = document.getElementsByClassName("checkbox");
-            for (var i = 0; i < checkboxes.length; i++) {
-              if (checkboxes[i].checked == true) {
-                checkedList.push(checkboxes[i]);
-              }
-            }
-
-          //if options are checked in the checklist
-          if (checkedList.length != 0) {
-            filterByCheckList(true);
-          }
-          //if the geometry search is active
-          if (view.graphics.length !=0) {
-            filterByGeometry(searchArea);
-          }
-          //if the keyword search is active
-          if (document.getElementById("searchInput").value.length != 0) {
-            filterByWord();
-          }
-          //if no filters remain, show all features
-          if (checkedList.length == 0 && view.graphics.length ==0 && document.getElementById("searchInput").value.length == 0){
-
-            filterByList(biblioFeatures2);
-          }
-        }*/
-
-        }
-
   //when a search criterion is removed, re-run the search with all remaining criteria
         function filterByAll() {
-        //  alert("filtering by all");
           document.getElementById("sortSelect").selectedIndex = 0;
           biblioFeatures3 = biblioFeatures2;
           checkedList = [];
@@ -805,7 +630,7 @@ outline: { // autocasts as new SimpleLineSymbol()
 
           //if options are checked in the checklist
           if (checkedList.length != 0) {
-            filterByCheckList(false);
+            filterByCheckList();
           }
           //if the geometry search is active
           if (view.graphics.length !=0) {
@@ -828,7 +653,7 @@ outline: { // autocasts as new SimpleLineSymbol()
           zoomToLayer();
         }
 
-        function filterByCheckList(refiltering) {
+        function filterByCheckList() {
           document.getElementById("sortSelect").selectedIndex = 0;
           var filterList = [];
           //if no boxes are checked, do nothing
@@ -931,12 +756,11 @@ outline: { // autocasts as new SimpleLineSymbol()
           else{
             filterByList(filterList);
           }
-          if (refiltering == false) {
+
           paginate(filterList, false);
           linkRecordsToPopups();
           recheckBoxes();
           var checkedBoxes = document.getElementsByClassName("checkbox");
-        }
         }//end filterByCheckList
 
     //filter by keyword
@@ -1004,39 +828,6 @@ outline: { // autocasts as new SimpleLineSymbol()
       createBrowseMultiple(biblioFeatures3, true);
     } //end filterByList
 
-    function reFilterByList(selectedList) {
-      for (h = 0; h < listOfLayers.length; h++) {
-        layer = listOfLayers[h];
-        biblioFeatures = [];
-        var selectedListInLayer = [];
-        var features = layer.source.toArray();
-        var biblioFeatures22 = listOfBiblioFeatures2[h];
-        for (g = 0; g < features.length; g++) {
-          biblioFeatures.push(features[g]);
-        }
-        //match selected features with their layer of origin
-        for (f = 0; f < selectedList.length; f++) {
-          for (a = 0; a < biblioFeatures22.length; a++) {
-            if (selectedList[f].attributes[uniqueID] == biblioFeatures22[a].attributes[uniqueID]) {
-              selectedListInLayer.push(selectedList[f]);
-            }
-          }
-        }
-        //remove all features
-        for (var i = 0; i < biblioFeatures.length; i++) {
-          layer.source.remove(biblioFeatures[i]);
-        }
-        //add features back to their layer of origin
-        for (var i = 0; i < selectedListInLayer.length; i++) {
-          layer.source.add(selectedListInLayer[i]);
-        }
-      }
-      var browse = document.getElementsByClassName("browse");
-      for (var i = 0; i < browse.length; i++) {
-        browse[i].innerHTML = "";
-      }
-      var polygonGraphic = view.graphics.length;
-    }
 
 //----------------------------LISTEN FOR CLICKS ON THE MAP--------------------------
     view.on("click", function(evt) {
@@ -1366,15 +1157,8 @@ outline: { // autocasts as new SimpleLineSymbol()
       if (!recordList[i].attributes[uniqueID]) {
         div.id = "point0";
       }
-      var outerRecordDiv =
       div.className = "record";
-
-
-
-
-
       biggerDiv.id = "big" + div.id;
-      biggerDiv.className = "bigRecord";
       if (recordList[i].attributes[englishTitle] && recordList[i].attributes[englishTitle] != " ") {
         div.innerHTML += "<b> English Title: </b>" + recordList[i].attributes[englishTitle] + "<br/>";
       }
@@ -1402,10 +1186,6 @@ outline: { // autocasts as new SimpleLineSymbol()
       if (recordList[i].attributes["Distance"] && includeDistance == true) {
         div.innerHTML += "<b>Distance:</b> " + recordList[i].attributes["Distance"] + "<br/>";
       }
-
-      if (pageStart) {
-          div.innerHTML += "Text starts on page " + recordList[i].attributes[pageStart];
-      }
       allRecords.appendChild(biggerDiv);
       biggerDiv.appendChild(div);
 
@@ -1414,7 +1194,6 @@ outline: { // autocasts as new SimpleLineSymbol()
       allCitationDiv.id = "allCitation" + div.id;
       allCitationDiv.className = "allCitation";
       biggerDiv.appendChild(allCitationDiv);
-      //div.appendChild(allCitationDiv);
       var closeDiv = document.createElement("div");
       closeDiv.innerHTML = "<a href = '#'> &#10761; </a>";
       closeDiv.className = "citationClose";
@@ -1462,7 +1241,6 @@ outline: { // autocasts as new SimpleLineSymbol()
       alaCitation.className = "citation";
       alaDiv.appendChild(alaCitation);
       biggerDiv.innerHTML += "<button type='button' class = 'citeButton' tag ='" + i + "'id = 'cite" + div.id + "'>Export Citation</button>";
-     //div.innerHTML += "<button type='button' class = 'citeButton' tag ='" + i + "'id = 'cite" + div.id + "'>Export Citation</button>";
     }
   } //end createRecordDivs
 
@@ -1592,7 +1370,6 @@ outline: { // autocasts as new SimpleLineSymbol()
         var citation = document.getElementById(citationID);
         if (!citation.style.display || citation.style.display == "none") {
           citation.style.display = "block";
-
           return;
         }
         if (citation.style.display == "block") {
@@ -1606,65 +1383,59 @@ outline: { // autocasts as new SimpleLineSymbol()
   //create the citations
   function makeClickCallback3(i) {
     function callback3(e){
-      //alert(i);
-      var index = i - 1;
       var firstLastName = listOfLastNameFields[0];
       var firstFirstName = listOfFirstNameFields[0];
-      var authorCitation = biblioFeatures2[index].attributes[firstLastName] + ", " + biblioFeatures2[index].attributes[firstFirstName];
+      var authorCitation = biblioFeatures2[i].attributes[firstLastName] + ", " + biblioFeatures2[i].attributes[firstFirstName];
       var secondLastName = listOfLastNameFields[1];
       var secondFirstName = listOfFirstNameFields[1];
       var thirdLastName = listOfLastNameFields[2];
       var thirdFirstName = listOfFirstNameFields[2];
-
-      if (biblioFeatures2[index].attributes[secondLastName] && biblioFeatures2[index].attributes[secondLastName] != " ") {
-        //alert(biblioFeatures2[index].attributes[firstLastName]);
+      if (biblioFeatures2[i].attributes[secondLastName] && biblioFeatures2[i].attributes[secondLastName] != " ") {
         for (var j = 1; j < listOfLastNameFields.length; j++) {
           var name = listOfAuthorFields[j];
-          if (biblioFeatures2[index].attributes[name] != " " && biblioFeatures2[index].attributes[name]) {
+          if (biblioFeatures2[i].attributes[name] != " " && biblioFeatures2[i].attributes[name]) {
             if (j != listOfLastNameFields.length - 1) {
               var nextField = listOfLastNameFields[j + 1];
-              if (biblioFeatures2[index].attributes[nextField] == " " && biblioFeatures2[index].attributes[name]) {
-                authorCitation += " and " + biblioFeatures2[index].attributes[name];
+              if (biblioFeatures2[i].attributes[nextField] == " " && biblioFeatures2[i].attributes[name]) {
+                authorCitation += " and " + biblioFeatures2[i].attributes[name];
               }
               else if (biblioFeatures2.attributes[name]){
-
-                authorCitation += biblioFeatures2[index].attributes[name] + ", ";
+                authorCitation += biblioFeatures2[i].attributes[name] + ", ";
               }
             }
             if (j == listOfLastNameFields.length - 1) {
-              authorCitation += " and " + biblioFeatures2[index].attributes[name];
+              authorCitation += " and " + biblioFeatures2[i].attributes[name];
             }
           }
         }
       }
       var titleCitation;
-      if (biblioFeatures2[index].attributes[language] == "English") {
-        titleCitation = biblioFeatures2[index].attributes[englishTitle];
+      if (biblioFeatures2[i].attributes[language] == "English") {
+        titleCitation = biblioFeatures2[i].attributes[englishTitle];
       }
-      if (biblioFeatures2[index].attributes[language] == "Turkish") {
-        titleCitation = biblioFeatures2[index].attributes[turkishTitle];
+      if (biblioFeatures2[i].attributes[language] == "Turkish") {
+        titleCitation = biblioFeatures2[i].attributes[turkishTitle];
       }
-      if (biblioFeatures2[index].attributes[language] != "Turkish" && biblioFeatures2[index].attributes[language] != "English") {
-        titleCitation = biblioFeatures2[index].attributes[otherTitle];
+      if (biblioFeatures2[i].attributes[language] != "Turkish" && biblioFeatures2[i].attributes[language] != "English") {
+        titleCitation = biblioFeatures2[i].attributes[otherTitle];
       }
       var dateField = "";
       var chicagoCitation = authorCitation+ '. ' +
-      '"' + titleCitation + '."' + biblioFeatures2[index].attributes[publication].italics() + ' no. ' +
-      biblioFeatures2[index].attributes[volume] + ' (' + biblioFeatures2[index].attributes[dateField] + '): ' + biblioFeatures2[index].attributes[pageStart] +
-      '-' + biblioFeatures2[index].attributes[pageEnd] + '.';
-      var harvardCitation = authorCitation + '. ' + biblioFeatures2[index].attributes[dateField] +
-      ", " + '"' + titleCitation + '", ' + biblioFeatures2[index].attributes[publication] + ", vol. " + biblioFeatures2[index].attributes[volume] +
-      ", pp. " +  biblioFeatures2[index].attributes[pageStart] + '-' + biblioFeatures2[index].attributes[pageEnd] + '.'
+      '"' + titleCitation + '."' + biblioFeatures2[i].attributes[publication].italics() + ' no. ' +
+      biblioFeatures2[i].attributes[volume] + ' (' + biblioFeatures2[i].attributes[dateField] + '): ' + biblioFeatures2[i].attributes[pageStart] +
+      '-' + biblioFeatures2[i].attributes[pageEnd] + '.';
+      var harvardCitation = authorCitation + '. ' + biblioFeatures2[i].attributes[dateField] +
+      ", " + '"' + titleCitation + '", ' + biblioFeatures2[i].attributes[publication] + ", vol. " + biblioFeatures2[i].attributes[volume] +
+      ", pp. " +  biblioFeatures2[i].attributes[pageStart] + '-' + biblioFeatures2[i].attributes[pageEnd] + '.'
       var mlaCitation = authorCitation + '. ' +
-      '"' + titleCitation + '."' + biblioFeatures2[index].attributes[publication].italics() + ' vol. ' +
-      biblioFeatures2[index].attributes[volume] + ", " + biblioFeatures2[index].attributes[dateField] + ", pp. " +  biblioFeatures2[index].attributes[pageStart] + '-' +
-      biblioFeatures2[index].attributes[pageEnd] + '.';
+      '"' + titleCitation + '."' + biblioFeatures2[i].attributes[publication].italics() + ' vol. ' +
+      biblioFeatures2[i].attributes[volume] + ", " + biblioFeatures2[i].attributes[dateField] + ", pp. " +  biblioFeatures2[i].attributes[pageStart] + '-' +
+      biblioFeatures2[i].attributes[pageEnd] + '.';
       var apaCitation = authorCitation + '. ' +
-      '(' + biblioFeatures2[index].attributes[dateField] + '). ' + titleCitation + '. ' +
-      biblioFeatures2[index].attributes[publication].italics() + ', ' +  biblioFeatures2[index].attributes[volume].toString().italics() + ', ' +
-      biblioFeatures2[index].attributes[pageStart] + '-' + biblioFeatures2[index].attributes[pageEnd] + '.';
+      '(' + biblioFeatures2[i].attributes[dateField] + '). ' + titleCitation + '. ' +
+      biblioFeatures2[i].attributes[publication].italics() + ', ' +  biblioFeatures2[i].attributes[volume].toString().italics() + ', ' +
+      biblioFeatures2[i].attributes[pageStart] + '-' + biblioFeatures2[i].attributes[pageEnd] + '.';
       var allCitationDiv = "allCitationpoint" + i;
-      var citeButtonDiv = "citepoint" + i;
       var harvardDiv = "harvardCitationpoint" + i;
       var harvardCitationDiv = document.getElementById(harvardDiv);
       harvardCitationDiv.innerHTML = harvardCitation;
@@ -1678,8 +1449,6 @@ outline: { // autocasts as new SimpleLineSymbol()
       var alaCitationDiv = document.getElementById(alaDiv);
       alaCitationDiv.innerHTML = apaCitation;
       document.getElementById(allCitationDiv).style.display = "block";
-      document.getElementById(citeButtonDiv).style.display = "none";
-
     }
     return callback3;
   }
@@ -1688,9 +1457,7 @@ outline: { // autocasts as new SimpleLineSymbol()
   function makeClickCallbackClose(i) {
     function callbackClose(e) {
       var divID = "allCitationpoint" + i;
-      var citeButtonDiv = "citepoint" + i;
       document.getElementById(divID).style.display = "none";
-      document.getElementById(citeButtonDiv).style.display = "block";
     }
     return callbackClose;
   } //end makeClickCallbackClose
@@ -1857,7 +1624,7 @@ window.Tether = {};
   <div id = "header">
     <div id = "pageTitle"> Turkish Archaeology Geographical Bibliography
       <a href = "map-tr.html"><div id="translate_button" class="esri-widget-button esri-widget esri-interactive" style = "float:right" >
-        View page in Turkish
+        View page in English
       </div>
     </a>
   </div>
@@ -1868,14 +1635,11 @@ window.Tether = {};
     <button id = "clearSearchButton" type="submit" class="searchButton"> Clear
     </button>
   </div>
-
+  <a href = "#"><div id = "hideSearch"> Hide </div></a>
 </div>
-<div id = "biggestDiv">
 <div id="viewDiv">
 </div>
 <div id = "search" >
-    <a id = "hideSearcha" href = "#"><div id = "hideSearch"> Hide </div></a>
-    <div id = "innerSearch">
   <div id = "allButtons">
     <div id = "showAll" class = "searchButton allButton esri-widget-button esri-widget esri-interactive"> Show all </div>
     <div id="clear-button" class="allButton esri-widget-button esri-widget esri-interactive">
@@ -1976,7 +1740,7 @@ window.Tether = {};
       </div>
       <div id="collapseThree" class="collapse" role="tabpanel" aria-labelledby="headingThree" data-parent="#accordion">
         <div class="card-body">
-
+          <div id = "paginateDiv"></div>
           <span></span>
           <br/>
           <div id = "sortSelectDiv">
@@ -1988,14 +1752,13 @@ window.Tether = {};
             </select>
           </div>
           <div id = "allRecords"></div>
-          <div id = "paginateDiv"></div>
         </div>
       </div>
     </div> <!--end results card -->
   </div> <!--end accordion -->
 </div>
-</div>
-</div>
+
+
 <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>

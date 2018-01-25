@@ -1,0 +1,436 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title></title>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.4/esri/css/main.css">
+  <script src="https://js.arcgis.com/4.4/"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="shstyle.css">
+
+  <script>
+  require([
+    "esri/Map",
+    "esri/WebMap",
+    "esri/views/MapView",
+    "esri/layers/FeatureLayer",
+    "esri/geometry/Point",
+    "esri/geometry/Polygon",
+    "esri/geometry/Circle",
+    "esri/geometry/Polyline",
+    "esri/geometry/SpatialReference",
+    "esri/geometry/Extent",
+    "esri/Graphic",
+    "esri/Color",
+    "esri/symbols/SimpleMarkerSymbol",
+    "esri/layers/GraphicsLayer",
+    "esri/symbols/SimpleFillSymbol",
+    "esri/symbols/SimpleLineSymbol",
+    "esri/tasks/QueryTask",
+    "esri/tasks/support/Query",
+    "esri/tasks/support/StatisticDefinition",
+    "esri/geometry/geometryEngine",
+    "esri/widgets/Search",
+    "esri/widgets/Popup",
+    "esri/PopupTemplate",
+    "esri/core/watchUtils",
+    "dojo/dom",
+    "dojo/domReady!",
+    "dojo/ready"
+  ],
+
+  function(Map, WebMap, MapView, FeatureLayer, Point, Polygon, Circle, Polyline, SpatialReference, Extent, Graphic, Color, SimpleMarkerSymbol, GraphicsLayer, SimpleFillSymbol, SimpleLineSymbol, QueryTask,
+    Query, StatisticDefinition, geometryEngine, Search, Popup, PopupTemplate, watchUtils, dom){
+      var map = new WebMap({
+        portalItem: { // autocasts as new PortalItem()
+          id: "5838281353a74323864fcbe816ee0f0e"
+        }
+      })
+
+      var view = new MapView({
+        container: "viewDiv",  // Reference to the scene div created in step 5
+        map: map,  // Reference to the map object created before the scene
+        zoom: 16,  // Sets zoom level based on level of detail (LOD)
+        center: [-75.1482, 39.94581]  // Sets center point of view using longitude,latitude
+      });
+
+      function isInArray(value, array) {
+        return array.indexOf(value) > -1;
+      }
+
+      view.then(function() {
+        var allLayers = map.allLayers.toArray();
+        //uncomment this to get a list of all the layer ids on the map
+        for (var i = 0; i < allLayers.length; i++) {
+        //  console.log(allLayers[i].id);
+        }
+
+
+
+        layerID = "allFirstParcelsGeoOh_shapefile_6643";
+        layerID2 = "Archive 26_shapefile_5898";
+
+        historicLayer = map.findLayerById(layerID);
+        modernLayer = map.findLayerById(layerID2);
+        var layer = historicLayer;
+
+        for (var i = 0; i < layer.fields.length; i++){
+        //  console.log("field index " + i + " is " + layer.fields[i].name);
+        }
+
+        modernLayer.visible = false;
+
+        var records = layer.source.toArray();
+        var recordsList = [];
+        for (var i = 0, len = records.length; i < len; i++) {
+          recordsList.push(records[i]);
+        }
+
+        //put all the image field indexes in an array
+        var imageFields = [];
+        for (var i = 0; i < layer.fields.length; i++){
+          var fieldName = layer.fields[i].name;
+          var substring = "ImgSrc";
+          if (fieldName.indexOf(substring) !== -1) {
+            imageFields.push(i);
+          }
+        }
+
+
+        /*  var imageFields2 = [];
+        for (var i = 0; i < layer2.fields.length; i++){
+        var fieldName = layer2.fields[i].name;
+        var substring = "ImgSrc";
+        if (fieldName.indexOf(substring) !== -1) {
+        imageFields2.push(i);
+      }
+    }*/
+
+        var collapseDiv = document.getElementById("collapseButton");
+        var narrativeVisible = true;
+        collapseDiv.addEventListener('click', function() {
+          var sidePanel = document.getElementById("sidebar");
+          //  var socialMedia = document.getElementById("socialDiv");
+          if (narrativeVisible == true){
+            sidePanel.style.width = "2px";
+            //    socialMedia.style.display = "none";
+            document.getElementById("collapse").style.left = "-650%";
+            document.getElementById("collapse").textContent = "Show";
+            //  document.getElementById("sliderDiv").style.left = "50%";
+            narrativeVisible = false;
+            return;
+          }
+
+          if (narrativeVisible == false) {
+            sidePanel.style.width = "26%";
+            //  socialMedia.style.display = "block";
+            document.getElementById("collapse").style.left = "-13%";
+            document.getElementById("collapse").textContent = "Hide";
+            //document.getElementById("sliderDiv").style.left = "60%";
+            narrativeVisible = true;
+            return;
+          }
+        }); //end click
+
+
+        //toggle layer visibility
+
+        document.getElementById("toggleLayers").addEventListener('click', function(){
+          historicLayer.visible = !historicLayer.visible;
+          modernLayer.visible = !modernLayer.visible;
+          /*if (layer == layer1) {
+          layer = layer2;
+          return;
+        }
+        if (layer == layer2) {
+        layer = layer1;
+        return;
+      }*/
+        });
+
+
+      //show all records when the showAll button is clicked
+        var showAll = document.getElementById("showAll");
+        showAll.addEventListener('click', function() {
+          //reset the selector's value
+          selector.selectedIndex = 0;
+          document.getElementById("media_select").selectedIndex = 0;
+          //clear currently displayed recordsList[i]s
+          for (var i = records.length - 1; i > -1; i--) {
+            layer.source.remove(records[i]);
+          }
+          //add all recordsList[i]s
+          for (var i = 0; i < recordsList.length; i++){
+            layer.source.add(recordsList[i]);
+          }
+        }); //end onclick
+
+
+        var selector = document.getElementById("field_select");
+        var selectorList = [];
+        for (var i = 0, len = records.length; i < len; i++) {
+
+          //alert(records[i].attributes["Re_Use_Typ"]);
+          var number = records[i].attributes["Re_Use_Typ"];
+          //alert(number);
+          if (isInArray(number, selectorList) == false && number != " "){
+            selectorList.push(number);
+          }
+        }
+        sortedList = selectorList.sort();
+        for (var i = 0; i < sortedList.length; i++) {
+          var optionElement = document.createElement("option");
+          optionElement.innerHTML = sortedList[i];
+          selector.appendChild(optionElement);
+        }
+
+        selector.addEventListener('change', filterEquals);
+        var mediaSelector = document.getElementById("media_select");
+        mediaSelector.addEventListener('change', mediaFilter);
+
+        function filterEquals() {
+          //clear all layers
+          for (var i = records.length - 1; i>-1; i--) {
+            layer.source.remove(records[i]);
+          }
+          var reuseType = selector.value;
+          //add all recordsList[i]s to the map that match the filter's value
+          for (var i = 0; i < recordsList.length; i++) {
+            if (recordsList[i].attributes["Re_Use_Typ"] == reuseType) {
+              layer.source.add(recordsList[i]);
+            }
+          }
+        } //end filter
+
+        function mediaFilter() {
+          var firstImageField = imageFields[0];
+          var firstImageName = layer.fields[firstImageField].name;
+          var mediaType = mediaSelector.value;
+          if (mediaType == "photo") {
+            for (var i = records.length - 1; i>-1; i--) {
+              layer.source.remove(records[i]);
+            }
+            for (var i = 0; i < recordsList.length; i++) {
+              if (recordsList[i].attributes[firstImageName].length > 1) {
+                layer.source.add(recordsList[i]);
+              }
+            }
+          }
+
+          if (mediaType == "oralhist") {
+            for (var i = records.length - 1; i>-1; i--) {
+              layer.source.remove(records[i]);
+            }
+            for (var i = 0; i < recordsList.length; i++) {
+              if (recordsList[i].attributes["Narrator"].length > 1) {
+                layer.source.add(recordsList[i]);
+              }
+            }
+          }
+
+          if (mediaType == "oralhist") {
+            for (var i = records.length - 1; i>-1; i--) {
+              layer.source.remove(records[i]);
+            }
+            for (var i = 0; i < recordsList.length; i++) {
+              //if (recordsList[i].attributes["OralHist"].length > 1) {
+              if (recordsList[i].attributes["Narrator"].length > 1) {
+                layer.source.add(recordsList[i]);
+              }
+            }
+          }
+
+          if (mediaType == "both") {
+            for (var i = records.length - 1; i>-1; i--) {
+              layer.source.remove(records[i]);
+            }
+            for (var i = 0; i < recordsList.length; i++) {
+              //if (recordsList[i].attributes[firstImageName].length > 1 && recordsList[i].attributes["OralHist"].length > 1) {
+              if (recordsList[i].attributes[firstImageName].length > 1 && recordsList[i].attributes["Narrator"].length > 1) {
+                layer.source.add(recordsList[i]);
+              }
+            }
+          }
+        }//end mediaFilter
+
+
+
+
+        for (var i = 0; i < recordsList.length; i++) {
+         var popupContent = "<div style = 'display: inline-block; width:100%'>";
+          //popupContent += "<div style = 'font-size:16px; width:auto; display: inline-block'><b>${Name}</b></div>";
+          if  (recordsList[i].attributes["Narrator"] && recordsList[i].attributes["Narrator"].length > 1) {
+            popupContent += "<div style = 'float:right; width:auto; display: inline-block'><img width = '20' src = 'http://www.clker.com/cliparts/6/g/n/Z/Y/V/head-outline-hi.png'></div></div>";
+            popupContent += "<div style = 'float:right; width:auto; margin: 4px'><a href = '#'> Oral History: " + recordsList[i].attributes["Narrator"] + "</a></div>";
+          }
+
+         var totalNumberImages = recordsList[i].attributes["NumImages"];
+          //if there's only one image, just add it to the popup
+          if (totalNumberImages == 1) {
+            var firstImage = imageFields[0];
+            var firstImageField = layer.fields[firstImage].name;
+            var firstDate = imageFields[0] + 1;
+            var firstDateField = layer.fields[firstDate].name;
+            var photoDate;
+            if (recordsList[i].attributes[firstDateField] < 2999) {
+              photoDate = recordsList[i].attributes[firstDateField];
+            }
+            if (recordsList[i].attributes[firstDateField] > 2999) {
+              photoDate = "";
+            }
+            popupContent += "<div><a href='" + recordsList[i].attributes[firstImageField] +"'><img width='450' src='" + recordsList[i].attributes[firstImageField] + "' style='position:relative'></a><span style = 'position:relative; left:50%; font-size:16px'><b>" + photoDate + "</b></span></div>";
+
+          }
+
+          //if there's more than one image, put them in the format used by the Bootstrap Slideshow plugin
+          if (totalNumberImages > 1) {
+            popupContent += "<div class='container' id='carouselContainer' style = 'width: 450px; margin:8px'><br>";
+            popupContent += "<div id='myCarousel' class='carousel slide' data-ride='carousel' style = 'width: 450px; right:4%'>";
+            popupContent += "<div class='carousel-inner' role='listbox'>";
+            var firstImage = imageFields[0];
+            var firstImageField = layer.fields[firstImage].name;
+            var firstDate = imageFields[0] + 1;
+            var firstDateField = layer.fields[firstDate].name;
+            var photoDate;
+            if (recordsList[i].attributes[firstDateField] < 2999) {
+              photoDate = recordsList[i].attributes[firstDateField];
+            }
+            if (recordsList[i].attributes[firstDateField] > 2999) {
+              photoDate = "";
+            }
+            popupContent += "<div class='item active'><a href='" + recordsList[i].attributes[firstImageField] + "'><img width='450' src='" + recordsList[i].attributes[firstImageField] + "'></a><span style = 'position:relative; left:50%; font-size:16px'><b>" + photoDate + "</b></span></div>";
+            for (var j = 1; j < totalNumberImages; j++){
+              var fieldindex = imageFields[j];
+              var fieldname = layer.fields[fieldindex].name;
+              var dateFieldIndex = fieldindex + 1;
+              var dateField = layer.fields[dateFieldIndex].name;
+              var photoDate;
+              if (recordsList[i].attributes[dateField] < 2999) {
+                photoDate = recordsList[i].attributes[dateField];
+              }
+              if (recordsList[i].attributes[dateField] > 2999) {
+                photoDate = "";
+              }
+              popupContent += "<div class='item'><a href='" + recordsList[i].attributes[fieldname] + "'><img width='450' src='" + recordsList[i].attributes[fieldname] + "'></a><span style = 'position:relative; left:50%; font-size:16px'><b>" + photoDate + "</b></span></div>";
+            }
+            popupContent += "</div>";
+            popupContent += "<a class='left carousel-control' href='#myCarousel' role='button' data-slide='prev'>" +
+            "<span class='glyphicon glyphicon-chevron-left' aria-hidden='true'></span>" +
+            "<span class='sr-only'>Previous</span>" +
+            "</a>" +
+            "<a class='right carousel-control' href='#myCarousel' role='button' data-slide='next'>" +
+            "<span class='glyphicon glyphicon-chevron-right' aria-hidden='true'></span>" +
+            "<span class='sr-only'>Next</span>" +
+            "</a>" +
+            "</div>";
+            popupContent += "</div>";
+          }
+          if (recordsList[i].attributes["Hist__Cert"] != " " || recordsList[i].attributes["Re_Use_Ful"].length > 1 || recordsList[i].attributes["Re_Use_Typ"].length > 1){
+            popupContent += "<br/>";
+            popupContent += "<div style = 'border-bottom: 1px solid white; font-size: 16px'> ADDITIONAL DATA </div>";
+          }
+          if (recordsList[i].attributes["Hist__Cert"] && recordsList[i].attributes["Hist__Cert"] == "Y") {
+            popupContent += "<br/>";
+            popupContent += "<b>Historic Certificate:</b> Yes";
+          }
+          if (recordsList[i].attributes["Hist__Cert"] && recordsList[i].attributes["Hist__Cert"] == "N") {
+            popupContent += "<br/>";
+            popupContent += "<b>Historic Certificate:</b> No";
+          }
+          if (recordsList[i].attributes["Re_Use_Ful"].length > 1) {
+            popupContent += "<br/>";
+            popupContent += "<b>Reuse:</b> " + recordsList[i].attributes["Re_Use_Ful"];
+          }
+          if (recordsList[i].attributes["Re_Use_Typ"].length > 1) {
+            popupContent += "<br/>";
+            popupContent += "<b>Reuse Type:</b> " + recordsList[i].attributes["Re_Use_Typ"];
+          }
+          recordsList[i].setAttribute("PopupContent", popupContent);
+          //console.log(recordsList[i].attributes["PopupContent"]);
+        } //end for
+
+        var popupTemplate = new PopupTemplate();
+        historicLayer.popupTemplate = popupTemplate;
+        popupTemplate.title = "{Name}";
+        popupTemplate.content = "{PopupContent}";
+
+        /*layer.on("click", function(evt) {
+          var recordsList[i] = evt.graphic;
+          alert(recordsList[i]);
+          popupTemplate.title = recordsList[i].attributes["Name"];
+          popupTemplate.content = "test";
+        });*/
+
+        /*view.on("click", function(evt) {
+          //open a popup when a recordsList[i] is clicked
+          view.hitTest(evt).then(function(response) {
+            var clickedList = [response.results[0].graphic];
+            //alert(clickedList[0].attributes["Name"]);
+          //  alert(evt.mapPoint);
+          view.popup.close();
+            view.popup = new Popup({
+              title: clickedList[0].attributes["Name"],
+              location: clickedList[0].geometry.centroid,
+              content: ''
+            });
+            view.popup.open()
+          }).then();
+
+        }); //end view.on click*/
+      }); // end view.then
+    }); //end all
+
+
+    </script>
+    </head>
+    <body class="claro">
+        <div id = "pageTitle"> Preserving Society Hill </div>
+      <div id="viewDiv">
+        <div id = "collapseButton">
+						<button type="button" id = "collapse">Hide</button>
+					</div>
+					<div id = "geocoder" style = "position:relative; z-index:1000"></div>
+					<div id = "buttonDiv">
+						<input class="w3-button w3-large w3-round" style = "background-color: #d8e6cc" type="button"  id="showAll" value="Show all"/>
+						<select id="field_select" style = "background-color: #d8e6cc; height:30px" class="w3-button w3-large w3-round selector"><option value="init">(filter by reuse)</option></select>
+						<select id="media_select" style = "background-color: #d8e6cc; height:30px; width:130px" class="w3-button w3-large w3-round selector">
+							<option value="init">(filter by media)</option>
+							<option value = "photo">Photos</option>
+							<option value = "oralhist">Oral Histories</option>
+							<option value = "both">Photos and Oral Histories</option>
+						</select>
+						<!--<select id="layer_select" style = "background-color: #d8e6cc; height:30px; width:130px" class="w3-button w3-large w3-round selector">
+							<option value="historic">Historic parcels</option>
+							<option value = "modern"> Modern footprints</option>
+							<option value = "none">No layers</option>
+						</select>-->
+					</div>
+					<div id = "toggle">
+						<div class="layerText">Historic parcels</div>
+						<label class="switch" style = "vertical-align:middle">
+							<input type="checkbox">
+							<span id = "toggleLayers" class="slider">
+							</span>
+						</label>
+						<div class="layerText" >Modern building footprints</div>
+					</div>
+
+      </div>
+      <div id = "sidebar">
+        <div id = "introduction">
+        <div id = "introTitle" class = "sidebarTitle">
+          Introduction
+        </div>
+        <div id = "introText" class = "sidebarText">
+          This website displays historic photographs, oral histories and redevelopment information for properties in Philadelphia's Society Hill neighborhood.  Click on a parcel to view the associated media, or filter by reuse type or type of media.
+      </div>
+      </div>
+    </div>
+      </body>
+      <script>
+      </script>
+      </html>

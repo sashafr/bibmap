@@ -19,9 +19,9 @@ $pageEndField = 9;
 $volumeField = 4;
 $numberField = 5;
 $uniqueIDField = 2;
+$dateField= 0;
 
-//this is the name of the date field
-$dateFieldName = " ";
+
 
 //these are the indices all the fields that contain author names
 $authorIndices = array(21, 25, 29, 33, 37, 41, 45, 49, 53, 57);
@@ -36,8 +36,6 @@ $publicationFieldName = "astkstsa_1";
 $test = 'hello world';
 $pageTitle = 'Turkish Archaeology Geographical Bibliography';
 $translatedPage = 'http://104.131.176.181/bibmap/map.php?lang=tr'; //the page that the "Show page in" button directs to
-$about = 'About';
-$abouttext = 'This is a map';
 $viewPageIn = 'View page in Turkish';
 $enterSearchTerm = 'Enter search term';
 $search = 'Search';

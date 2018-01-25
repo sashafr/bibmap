@@ -381,7 +381,6 @@ outline: { // autocasts as new SimpleLineSymbol()
       uniqueID = layer.fields[2].name;
 
 
-
       //---------------------------ATTACH LISTENERS TO BUTTONS AND SELECTORS----------------------
 
       //move the search widget into the same div as the distance selector
@@ -829,6 +828,7 @@ outline: { // autocasts as new SimpleLineSymbol()
         }
 
         function filterByCheckList(refiltering) {
+
           document.getElementById("sortSelect").selectedIndex = 0;
           var filterList = [];
           //if no boxes are checked, do nothing

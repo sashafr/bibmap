@@ -343,6 +343,8 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
             volumeIndex =  <?php echo $volumeField ?>;
             numberIndex = <?php echo $numberField ?>;
             uniqueIDIndex = <?php echo $uniqueIDField ?>;
+            dateIndex = <?php echo $dateField ?>;
+
 
 
             //get fields associated with other relevant information
@@ -366,10 +368,8 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
             console.log("number:" + number);
             uniqueID = layer.fields[uniqueIDIndex].name;
             console.log("uniqueID:" + uniqueID);
-
-
-            date = '<?php echo $dateFieldName ?>';
-            console.log("date is" +date);
+            date = layer.fields[dateIndex].name;
+            console.log("date is" + date);
 
 
 

@@ -25,8 +25,8 @@ $dateField= 0;
 
 //these are the indices all the fields that contain author names
 $authorIndices = array(21, 25, 29, 33, 37, 41, 45, 49, 53, 57);
-$firstNameIndices = array(24, 28, 32, 36, 40, 44, 48, 52, 56);
-$lastNameIndices = array(19, 23, 27, 31, 35, 39, 43, 47, 51, 55, 59);
+$firstNameIndices = array(20, 24, 28, 32, 36, 40, 44, 48, 52, 56);
+$lastNameIndices = array(19, 23, 27, 31, 35, 39, 43, 47, 51, 55);
 
 //these are the names of the fields for language and publication
 $languageFieldName = "astksts_12";

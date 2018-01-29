@@ -329,6 +329,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                 var firstNameIndex = listOfFirstNameFieldIndices[i];
                 listOfFirstNameFields.push(layer.fields[firstNameIndex].name);
             }
+            console.log(listOfAuthorFields);
 
 
 
@@ -622,6 +623,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                     var popupContent;
                     popupContent = "<b>" + '<?php echo $authors ?>' + ": </b>";
                     var firstAuthor = listOfAuthorFields[0];
+                    console.log("first author" + firstAuthor);
                     if (biblioFeatures[i].attributes[firstAuthor]) {
                         popupContent += biblioFeatures[i].attributes[firstAuthor];
                     }
@@ -1488,6 +1490,10 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                         var secondFirstName = listOfFirstNameFields[1];
                         var thirdLastName = listOfLastNameFields[2];
                         var thirdFirstName = listOfFirstNameFields[2];
+                        if (biblioFeatures2[index].attributes[thirdLastName] && biblioFeatures2[index].attributes[thirdLastName] != " ") {
+                          authorCitation += ", ";
+                        }
+
 
                         if (biblioFeatures2[index].attributes[secondLastName] && biblioFeatures2[index].attributes[secondLastName] != " ") {
                             //alert(biblioFeatures2[index].attributes[firstLastName]);
@@ -1495,13 +1501,16 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                                 var name = listOfAuthorFields[j];
                                 if (biblioFeatures2[index].attributes[name] != " " && biblioFeatures2[index].attributes[name]) {
                                     if (j != listOfLastNameFields.length - 1) {
-                                        var nextField = listOfLastNameFields[j + 1];
-                                        if (biblioFeatures2[index].attributes[nextField] == " " && biblioFeatures2[index].attributes[name]) {
-                                            authorCitation += " and " + biblioFeatures2[index].attributes[name];
+                                        var nextField = listOfLastNameFields[j];
+                                        var nextFirstName = listOfFirstNameFields[j];
+                                        console.log(nextField);
+                                        if (biblioFeatures2[index].attributes[thirdLastName] == " " && biblioFeatures2[index].attributes[name]) {
+                                            authorCitation += " and " + biblioFeatures2[index].attributes[secondFirstName] + " " + biblioFeatures2[index].attributes[secondLastName];
                                         }
-                                        else if (biblioFeatures2.attributes[name]){
-
-                                            authorCitation += biblioFeatures2[index].attributes[name] + ", ";
+                                        else {
+                                          console.log("in else if");
+                                          //biblioFeatures2[index].attributes[secondFirstName] + " " + biblioFeatures2[index].attributes[secondLastName];
+                                            authorCitation += biblioFeatures2[index].attributes[nextFirstName] + " " + biblioFeatures2[index].attributes[nextField] + ", ";
                                         }
                                     }
                                     if (j == listOfLastNameFields.length - 1) {

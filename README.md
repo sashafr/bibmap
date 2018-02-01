@@ -1,13 +1,39 @@
 # Mapped Bibliography
 
-**This project is actively in development. 10/3/2017**
+This project creates a simple interface that can be applied on top of a ArcGIS webmap which contains polygons which spatially represent a publication. The necessary structure of the webmap's attribute table is described below. The interface includes built in functionality to display the map in several different languages (our project developed this for Turkish and English).
 
+### Prerequisites
 
+- ArcGIS Online account
+- LAMP set-up with a location to host and serve project code (with LAMP, it can be unzipped directly in the `html` folder or in any subfolder). _Note that for this project, MySQL is actually not necessary since the data lives in ArcGIS Online._
+- Shapefiles containing spatial bibliography (see next section to prep your data).
+- git (if cloning)
+
+#### _Prepping Your Data_
+This code gets data from a webmap in ArcGIS online, which serves as the database.
+
+1. All layers should be generated in ArcGIS for Desktop as shapefiles. ???It is recommended that your features be drawn as polygons.??? The attribute table should contain the following fields:
+  - Field 1
+  - Field 2
+2. Compress all shapefiles into a zip file.
+3. In your ArcGIS Online account, under the My Content tab, select "Add Item". and upload your zipped shapefiles into a WebMap. _For the map to be viewed by the public, all layers and the map itself must be made public using the sharing settings in AGOL._  
 
 ## Getting Started
 
+1. Upload zipped Github repo to the location where you would like to serve the files OR `cd` to folder where you would like to serve the map and `git clone https://github.com/upenndigitalscholarship/bibmap.git`.
+2. Structure of Project:
+  - `map.php` - map interface
+  - `en.php` - English dictionary of text appearing on interface
+  - `tr.php` - Turkish dictionary of text appearing on interface
+  - `style.css` - styles
+To link to a map, the webmap ID, which can be found at the end of the URL in AGOL, needs to be referenced as the portalItem when a new webmap is created (line 114). All layers that are set as visible in AGOL will appear on the map as soon as you link to the webmap as a portal item, but the individual layers must also be input using the variable $layerIDList described above.
 
-To get the code on your machine, download a copy and link to the server.  There are four files.  map.php contains all information for the map.  To generate translated copies of the page, this site uses a dictionary model, where variables are defined with English and Turkish text (and this can be expanded to whatever language you want).  en.php has all the variables in English; tr.php has the same variables in Turkish.  style.css contains all the style information.
+There is a limited amount of editing, such as adding features or modifying existing features, that can be done in AGOL.  Other changes such as adding fields needs to be done in ArcGIS for Desktop. You will then need to re upload the layers, which will mean they will have new IDs that need to be changed in the code.
+
+
+Starting on line 308, the fields are defined by field name or index.  If there are multiple author fields, they need to go in an array.  All of the fields used in the popups or the citations should also be defined here.  You can get the index and name of each field by uncommenting lines 301-303, or by looking at the table in AGOL.  However, the API adds a couple fields to the front of the table, so indices in the script will not match the indices of the fields in AGOL.
+
+## Getting Started
 
 There are two additional variables in the dictionaries.  $polygonZoomLevel is the zoom level at which the points change to polygons (the sites are polygons, but will be represented as points when the map is zoomed out past a certain point).  The points change to polygons by changing the layer's renderer between two different symbols.  
 
@@ -20,8 +46,6 @@ console.log(allLayers[i].id);
 The layer ids that need to go in the array will contain the name of the layer in AGOL, but will also contain additional numbers.  
 
 ### Prerequisites
-
-This project uses ArcGIS API for Javascript version 4.4, as well as the accompanying stylesheet.  Current documentation available on ESRI's website is for version 4.5 but there appear to have been few changes between 4.4 and 4.5.  You should NOT use anything from version 3.22 as it is very different from 4.4.
 
 This code gets data from a webmap in ArcGIS online, which serves as the database.  All layers should be generated in ArcGIS for Desktop as shapefiles, compressed into zip files, and loaded into a map in the user's account on AGOL.  For the map to be viewed by the public, all layers and the map itself must be made public using the sharing settings in AGOL.  
 
@@ -86,3 +110,6 @@ https://owl.english.purdue.edu/owl/
 
 This boostrap code was used to create the accordion search bar:
 https://getbootstrap.com/docs/4.0/components/collapse/
+
+The code for copying to clipboard can be found here:
+https://jsfiddle.net/jdhenckel/km7prgv4/3/

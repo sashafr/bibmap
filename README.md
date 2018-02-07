@@ -16,7 +16,7 @@ This code gets data from a webmap in ArcGIS online, which serves as the database
   - Field 1
   - Field 2
 2. Compress all shapefiles into a zip file.
-3. In your ArcGIS Online account, under the My Content tab, select "Add Item". and upload your zipped shapefiles into a WebMap. _For the map to be viewed by the public, all layers and the map itself must be made public using the sharing settings in AGOL._  
+3. In your ArcGIS Online account, create a new WebMap and add a layer "from a File", then upload the zipped shapefiles. _For the map to be viewed by the public, all layers and the map itself must be made public using the sharing settings in AGOL._  
 
 ## Getting Started
 
@@ -25,8 +25,9 @@ This code gets data from a webmap in ArcGIS online, which serves as the database
   - `map.php` - map interface
   - `en.php` - English dictionary of text appearing on interface
   - `tr.php` - Turkish dictionary of text appearing on interface
+  - `config.php` - general site configurations
   - `style.css` - styles
-To link to a map, the webmap ID, which can be found at the end of the URL in AGOL, needs to be referenced as the portalItem when a new webmap is created (line 114). All layers that are set as visible in AGOL will appear on the map as soon as you link to the webmap as a portal item, but the individual layers must also be input using the variable $layerIDList described above.
+3. To link to a map, the webmap ID, which can be found at the end of the URL in AGOL, needs to be referenced as the portalItem when a new webmap is created (line 114). All layers that are set as visible in AGOL will appear on the map as soon as you link to the webmap as a portal item, but the individual layers must also be input using the variable $layerIDList described above.
 
 There is a limited amount of editing, such as adding features or modifying existing features, that can be done in AGOL.  Other changes such as adding fields needs to be done in ArcGIS for Desktop. You will then need to re upload the layers, which will mean they will have new IDs that need to be changed in the code.
 

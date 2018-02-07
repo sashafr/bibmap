@@ -98,6 +98,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
             var smallestY;
             var biggestX;
             var biggestY;
+            var geocodeClearClone;
 
             var drawConfig = {
                 drawingSymbol: new SimpleFillSymbol({
@@ -206,6 +207,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                     //find the largest and smallest x and y values for all points or polygons
                     //on the map
                     for (i = 0; i < biblioFeatures.length; i++) {
+                      if (biblioFeatures[i].geometry.centroid) {
                         if (biblioFeatures[i].geometry.centroid.x < smallestX) {
                             smallestX = biblioFeatures[i].geometry.centroid.x;
                         }
@@ -218,8 +220,25 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                         if (biblioFeatures[i].geometry.centroid.y > biggestY) {
                             biggestY = biblioFeatures[i].geometry.centroid.y;
                         }
+                      }
+
+                      if (biblioFeatures[i].geometry.x) {
+                        if (biblioFeatures[i].geometry.x < smallestX) {
+                            smallestX = biblioFeatures[i].geometry.x;
+                        }
+                        if (biblioFeatures[i].geometry.y < smallestY) {
+                            smallestY = biblioFeatures[i].geometry.y;
+                        }
+                        if (biblioFeatures[i].geometry.x > biggestX) {
+                            biggestX = biblioFeatures[i].geometry.x;
+                        }
+                        if (biblioFeatures[i].geometry.y > biggestY) {
+                            biggestY = biblioFeatures[i].geometry.y;
+                        }
+                      }
                     }
-                }
+                  }
+
                 //create an extent out of the minimum and maximum extents of all visible features
                 var xMargin = (biggestX - smallestX) * 0.25;
                 var yMargin = (biggestY - smallestY) * 0.25;
@@ -260,12 +279,14 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                     pointSymbol.color = new Color([0,0,0,1]);
 
 
+
                     if (layer && view.scale > <?php echo $polygonZoomLevel ?>) {
                         var renderer2 = new SimpleRenderer();
                         renderer2.symbol = pointSymbol;
-                        console.log(renderer2);
                         for (var i = 0; i < listOfLayers.length; i++) {
+                          if (listOfLayers[i].geometryType == "polygon") {
                             listOfLayers[i].renderer = renderer2;
+                          }
                         }
                     }
 
@@ -273,7 +294,9 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                         var renderer3 = new SimpleRenderer();
                         renderer3.symbol = highFillSymbol;
                         for (var i = 0; i < listOfLayers.length; i++) {
+                          if (listOfLayers[i].geometryType == "polygon") {
                             listOfLayers[i].renderer = renderer3;
+                          }
                         }
                     }
                 });
@@ -374,12 +397,16 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                 }
                 geocoderVisible = !geocoderVisible;
             });
+            var searching = false;
+            var geocodeClearButton;
+
 
             searchWidget.on("search-start", function(event){
                 //change the function of the geocoder exit button to both clear the search and also re-run the
                 //search without the geocoder results
+                if (searching == false) {
                 geocodeClearButton = document.getElementsByClassName("esri-search__clear-button")[0];
-                var geocodeClearClone = geocodeClearButton.cloneNode(true);
+                geocodeClearClone = geocodeClearButton.cloneNode(true);
                 geocodeClearButton.parentNode.removeChild(geocodeClearButton);
                 document.getElementsByClassName("esri-search__form")[0].appendChild(geocodeClearClone);
                 geocodeClearClone.addEventListener("click", function(){
@@ -391,6 +418,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                             images[i].parentNode.removeChild(images[i]);
                         }
                     }
+                    document.getElementById("distance_select").selectedIndex = 0;
                     document.getElementById("polygonSearchTag").style.display = "none";
                     for (var i = 0; i < view.graphics.length; i++) {
                         view.graphics.remove(view.graphics.toArray()[i]);
@@ -398,8 +426,60 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                     view.popup.close();
                     searchWidget.clear();
                     filterByAll();
+                    searching = false;
                 });
+                searching = true;
+              }
+
             });
+
+              //the old geocoder clear button (the one we got rid of above) will reappear every time the user enters
+              //new text in the geocoder search (this is an automatic ESRI function).  this checks for it and removes it
+              searchWidget.on("search-focus", function(event) {
+                setInterval(function(){
+                  var oldGeocodeClear = document.getElementsByClassName("esri-search__clear-button")[1];
+                  if (oldGeocodeClear) {
+                    oldGeocodeClear.parentNode.removeChild(oldGeocodeClear);
+                  }
+                }, 150);
+              });
+
+            searchWidget.on("search-complete", function(data) {
+                clearPolygon();
+                setTimeout(function(){
+                var images = document.getElementsByTagName('image');
+                if (images.length > 0) {
+                    for (i = 0; i < images.length; i++) {
+                        images[i].parentNode.removeChild(images[i]);
+                    }
+                }
+              }, 50)
+
+
+                if (searchByCircle == true) {
+                    circleButton.classList.toggle("esri-circle-button-selected");
+                    searchByCircle = false;
+                }
+                var distanceValue = document.getElementById("distance_select").value;
+                var point2 = new Point(searchWidget.results[0].results[0].feature.geometry);
+                circle2 = new Circle({
+                    center: point2,
+                    geodesic: false,
+                    radius: distanceValue,
+                    radiusUnit: "kilometers"
+                });
+                searchArea = circle2;
+                var circleSymb = new SimpleFillSymbol(SimpleFillSymbol.STYLE_NULL,
+                    new SimpleLineSymbol(
+                        SimpleLineSymbol.STYLE_SHORTDASHDOTDOT,
+                        new Color([105, 105, 105]),2), new Color([255, 255, 0, 0.25]));
+                var graphic = new Graphic(circle2, circleSymb);
+                view.graphics.add(graphic);
+
+                filterByGeometry(searchArea);
+                linkRecordsToPopups();
+              });
+
 
             //set the hide button to hide or show the search bar
             document.getElementById("innerSearch").style.display = "block";
@@ -565,8 +645,8 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
 
             });
 
-            //remove the polygon and redo the search when the polygon search tag
-            //is cleared
+            //remove the geometry and redo the search when the polygon search tag
+            //is cleared (thisi also clears the circle)
             var clearPolygonTag = document.getElementById("clearPolygonTag");
             clearPolygonTag.addEventListener("click", function() {
                 clearPolygon();
@@ -666,6 +746,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
             var textChecks;
             var pubChecks;
 
+            //push checked boxes into a list when the user clicks on them
             for (var h = 0; h < browseDivs.length; h++) {
                 browseDivs[h].addEventListener("click", function(e){
                     checkedList2 = [];
@@ -681,7 +762,6 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
 
             //when a search criterion is removed, re-run the search with all remaining criteria
             function filterByAll() {
-                //  alert("filtering by all");
                 document.getElementById("sortSelect").selectedIndex = 0;
                 biblioFeatures3 = biblioFeatures2;
                 checkedList = [];
@@ -719,6 +799,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                 zoomToLayer();
             }
 
+            //filter the map by all features that match the checklist criteria
             function filterByCheckList() {
                 document.getElementById("sortSelect").selectedIndex = 0;
                 var filterList = [];
@@ -826,7 +907,6 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                 paginate(filterList, false);
                 linkRecordsToPopups();
                 recheckBoxes();
-                var checkedBoxes = document.getElementsByClassName("checkbox");
 
             }//end filterByCheckList
 
@@ -889,7 +969,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                 for (var i = 0; i < browse.length; i++) {
                     browse[i].innerHTML = "";
                 }
-                var polygonGraphic = view.graphics.length;
+
                 createBrowse(language, language, true, biblioFeatures3);
                 createBrowse(publication, publication, true, biblioFeatures3);
                 createBrowseMultiple(biblioFeatures3, true);
@@ -938,6 +1018,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
         });  //end view.then
         //------------------END VIEW.THEN---------------------------------------------
 
+        //filter the points that fall within a chosen geometry
         function filterByGeometry(searchArea) {
             document.getElementById("sortSelect").selectedIndex = 0;
             var selectedList = [];
@@ -1009,38 +1090,8 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
         } //end filterByGeometry
 
 
-        //----------------------------SEARCH WIDGET-------------------------------------
-        searchWidget.on("search-complete", function(data) {
-
-            clearPolygon();
-            if (searchByCircle == true) {
-                circleButton.classList.toggle("esri-circle-button-selected");
-                searchByCircle = false;
-            }
-            var distanceValue = document.getElementById("distance_select").value;
-            var point2 = new Point(searchWidget.results[0].results[0].feature.geometry);
-            circle2 = new Circle({
-                center: point2,
-                geodesic: false,
-                radius: distanceValue,
-                radiusUnit: "kilometers"
-            });
-            searchArea = circle2;
-            var circleSymb = new SimpleFillSymbol(SimpleFillSymbol.STYLE_NULL,
-                new SimpleLineSymbol(
-                    SimpleLineSymbol.STYLE_SHORTDASHDOTDOT,
-                    new Color([105, 105, 105]),2), new Color([255, 255, 0, 0.25]));
-            var graphic = new Graphic(circle2, circleSymb);
-            view.graphics.add(graphic);
-
-            filterByGeometry(searchArea);
-            linkRecordsToPopups();
-          });
-
-
-
-                //----------------------RIGHT SIDEBAR FUNCTIONS---------------------------------------
-                //for a given field name, get all values of that field, the number of records with
+          //----------------------RESULTS WINDOW FUNCTIONS---------------------------------------
+          //for a given field name, get all values of that field, the number of records with
           //that value, and add them to the given div in the search and browse
           function createBrowse(divId, fieldName, useLayer, selectedFeatures) {
               //divId indicates the div that will be populated
@@ -1173,7 +1224,6 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
           //-------------------------LEFT SIDEBAR-----------------------
           //divide the results into sets of 10 and attach click listeners to page numbers
           function paginate(recordList, includeDistance) {
-              //  alert(recordList.length);
               var paginateNumbers = document.getElementById("paginateDiv");
               if (recordList.length < 11) {
                   paginateNumbers.innerHTML = "";
@@ -1440,9 +1490,18 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                               if (biblioFeatures22[k].attributes[language] == "Other") {
                                   popupTitle = otherTitle;
                               }
+
+                              if (listOfLayers[h].geometryType == "polygon") {
+                                var location = biblioFeatures22[k].geometry.centroid;
+                              }
+
+                              if (listOfLayers[h].geometryType == "point") {
+                                var location = biblioFeatures22[k].geometry;
+                              }
+
                               view.popup = new Popup({
                                   title: biblioFeatures22[k].attributes[popupTitle],
-                                  location: biblioFeatures22[k].geometry.centroid,
+                                  location: location,
                                   content: biblioFeatures22[k].attributes["PopupContent"]
                               });
                           }
@@ -1590,6 +1649,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
             return callbackCopy;
           }
 
+          //copy text to clipboard; this method preserves formatting
           function copyToClip(str) {
             function listener(e) {
               e.clipboardData.setData("text/html", str);

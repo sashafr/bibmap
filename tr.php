@@ -31,7 +31,7 @@ $sortByField = 'Sort by field';
 $title = 'Title';
 $author = 'Author';
 $date = 'Date';
-$testvar = '';
+$testvar2 = "test";
 
 //text values in the Javascript (from top to bottom)
 $show = 'Show';

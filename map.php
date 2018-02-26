@@ -1222,6 +1222,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
 
 
           //-------------------------LEFT SIDEBAR-----------------------
+          //paginate the results
           //divide the results into sets of 10 and attach click listeners to page numbers
           function paginate(recordList, includeDistance) {
               var paginateNumbers = document.getElementById("paginateDiv");

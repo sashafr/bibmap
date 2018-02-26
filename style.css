@@ -315,7 +315,6 @@ margin-top:20px;
   margin-left:4px;
 }
 
-
 .citation {
   display: none;
   margin: 4px;
@@ -353,7 +352,6 @@ margin-top:20px;
   float:left;
   margin:4px;
 }
-
 
 /* Buttons and miscellaneous */
 .border {
@@ -479,7 +477,6 @@ input:checked + .slider:before {
 
 
 /* The about window */
-
 .about-btn {
   position: relative;
   display: table-cell;

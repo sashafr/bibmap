@@ -23,7 +23,6 @@ $uniqueIDField = 2;
 $dateField= 0;
 
 
-
 //these are the indices all the fields that contain author names
 $authorIndices = array(21, 25, 29, 33, 37, 41, 45, 49, 53, 57);
 $firstNameIndices = array(20, 24, 28, 32, 36, 40, 44, 48, 52, 56);

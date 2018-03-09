@@ -1859,6 +1859,8 @@ if (isset($_GET['lang']) && in_array($_GET['lang'], $languageFiles)){
                 </header>
                 <article class="about-text">
                   <p><?php echo $abouttext ?></p>
+                  <hr />
+                  <p>Built by the <a href="https://github.com/upenndigitalscholarship/">Penn Libraries Digital Scholarship Team</a>. <a href="https://github.com/upenndigitalscholarship/bibmap">Get the Code</a>.</p>
                 </article>
               </div>
             </div>

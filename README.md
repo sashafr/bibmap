@@ -36,11 +36,11 @@ This code gets data from a webmap in ArcGIS online, which serves as the database
 
 1. Upload zipped Github repo to the location where you would like to serve the files OR `cd` to folder where you would like to serve the map and `git clone https://github.com/upenndigitalscholarship/bibmap.git`.
 2. Structure of Project:
-  - `map.php` - map interface
-  - `en.php` - English dictionary of text appearing on interface (THIS FILE IS MANDATORY, loaded in map.php if no language given)
-  - `tr.php` - Turkish dictionary of text appearing on interface (additional language files could be added, see below)
-  - `config.php` - general site configurations
-  - `style.css` - styles
+    - `map.php` - map interface
+    - `en.php` - English dictionary of text appearing on interface (THIS FILE IS MANDATORY, loaded in map.php if no language given)
+    - `tr.php` - Turkish dictionary of text appearing on interface (additional language files could be added, see below)
+    - `config.php` - general site configurations
+    - `style.css` - styles
 3. To link to a map, the webmap ID, which can be found at the end of the URL in AGOL, needs to be referenced as the portalItem when a new webmap is created. All layers that are set as visible in AGOL will appear on the map as soon as you link to the webmap as a portal item, but the individual layers must also be input using the variable $layerIDList described above.
 4. To add additional language files, copy en.php and rename to _xLANGUAGE_.php, translate all text fields, and then put *file name only* WITHOUT .php file extension in config file.
 

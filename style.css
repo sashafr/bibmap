@@ -37,7 +37,7 @@ abouta {
   float: right;
   background-color: #B3C6E3;
   color: white;
-  height: 31px;
+  height: 33px;
   width: 70px;
   margin-top: 14px;
 }
@@ -83,7 +83,7 @@ abouta {
 #hideSearcha {
   float: left;
   display: inline-flex;
-  left: 94.5%;
+  left: 99.5%;
   width: 50px;
   height: 50px;
   position: absolute;

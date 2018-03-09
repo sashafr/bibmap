@@ -32,4 +32,8 @@ $lastNameIndices = array(19, 23, 27, 31, 35, 39, 43, 47, 51, 55);
 $languageFieldName = "astksts_12";
 $publicationFieldName = "astkstsa_1";
 
+// language files
+// only put the name of the file WITHOUT .php file extension
+$languageFiles = array("en", "tr");
+
 ?>

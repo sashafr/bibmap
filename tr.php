@@ -1,12 +1,10 @@
 <?php
 
 //text values in the HTML (from top to bottom)
-$test = 'hello world';
 $pageTitle = 'Turkish Archaeology Geographical Bibliography';
 $about = 'About';
 $abouttext= 'About text goes here';
-$translatedPage = 'http://104.131.176.181/bibmap/map.php?lang=tr'; //the page that the "Show page in" button directs to
-$viewPageIn = 'View page in Turkish';
+$viewPageIn = 'View page in:';
 $enterSearchTerm = 'Enter search term';
 $search = 'Search';
 $clear = 'Clear';
@@ -31,7 +29,6 @@ $sortByField = 'Sort by field';
 $title = 'Title';
 $author = 'Author';
 $date = 'Date';
-$testvar2 = "test";
 
 //text values in the Javascript (from top to bottom)
 $show = 'Show';

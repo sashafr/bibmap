@@ -1,7 +1,8 @@
 <?php
 include 'config.php';
-if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
-    include 'tr.php';
+if (isset($_GET['lang']) && in_array($_GET['lang'], $languageFiles)){
+    $fn = $_GET['lang'] . ".php";
+    include $fn;
 } else {
     include 'en.php';
 }
@@ -487,7 +488,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                 if (document.getElementById("innerSearch").style.display == "block") {
                     document.getElementById("innerSearch").style.display = "none";
                     document.getElementById("hideSearch").innerHTML = '<?php echo $show ?>';
-                    document.getElementById("hideSearcha").style.left = "2%";
+                    document.getElementById("hideSearcha").style.left = "2.5%";
                     return;
                 }
 
@@ -495,7 +496,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                     document.getElementById("innerSearch").style.display = "block";
                     //document.getElementById("viewDiv").style.width = "73%";
                     document.getElementById("hideSearch").innerHTML = '<?php echo $hide ?>';
-                    document.getElementById("hideSearcha").style.left = "98%";
+                    document.getElementById("hideSearcha").style.left = "99.5%";
                     return;
                 }
             });
@@ -1835,10 +1836,13 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                 <div id = "pageTitle">
                   <div id = "title"> <?php echo $pageTitle ?> </div>
 
-
-                  <a href = '<?php echo $translatedPage ?>'><div id="translate_button" class="esri-widget-button esri-widget esri-interactive" style = "float:right" >
-                    <?php echo $viewPageIn ?>
-                  </div>
+                  <select id="translate_button" class="esri-widget-button esri-widget esri-interactive" style="float:right" onchange="location=this.value">
+                      <option value="init"><?php echo $viewPageIn ?></option>
+                      <?php $base_url = strtok($_SERVER["REQUEST_URI"], '?'); ?>
+                      <?php foreach($languageFiles as $transpage): ?>
+                          <option value="<?php echo $baseurl . '?lang=' . $transpage ?>"><?php echo $transpage ?></option>
+                      <?php endforeach ?>
+                  </select>
                 </a>
                 <div id = "aboutDiv">
                   <input type="checkbox" id="about" />

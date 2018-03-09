@@ -36,8 +36,8 @@ This code gets data from a webmap in ArcGIS online, which serves as the database
 
 1. Upload zipped Github repo to the location where you would like to serve the files OR `cd` to folder where you would like to serve the map and `git clone https://github.com/upenndigitalscholarship/bibmap.git`.
 2. Structure of Project:
-    - `map.php` - map interface
-    - `en.php` - English dictionary of text appearing on interface (THIS FILE IS MANDATORY, loaded in map.php if no language given)
+    - `index.php` - map interface
+    - `en.php` - English dictionary of text appearing on interface (THIS FILE IS MANDATORY, loaded in index.php if no language given)
     - `tr.php` - Turkish dictionary of text appearing on interface (additional language files could be added, see below)
     - `config.php` - general site configurations
     - `style.css` - styles

@@ -13,7 +13,7 @@ This project creates a simple interface that can be applied on top of a ArcGIS w
 This code gets data from a webmap in ArcGIS online, which serves as the database.
 
 1. All layers should be generated in ArcGIS for Desktop as shapefiles. AGOL can only accept shapefiles of 1000 features or less, so files with more features than that need to be split into sets of 1000.  The application is designed to accommodate as many layers as you need and users won't be able to tell.  Split the shapefile numerically by unique ID (i.e. numbers 1-1000, 1001-2000, etc.).  The layers can be either points or polygons, or a mix of the two. The attribute table should contain the following fields:
-  - OID or some other number that starts at 1 and that is not reset when you split the layer (i.e. don't use FID because each layer will restart the FID values at 0, so there will be more than one feature with the same FID).  If you want to do both point and polygon layers together, ensure that all of them have a unique value in this field.
+  - IMPORTANT: Your layers should include an integer field that starts at 1 and that is not reset when you split the layer (i.e. don't use FID because each layer will restart the FID values at 0, so there will be more than one feature with the same FID).  The best way to do this is to add a new field before you split the layer, then set it equal to FID + 1.  If you want to do both point and polygon layers together, ensure that all of them have a unique value in this field.
   - At least one field with the author's full name (if there are multiple authors, one field per author)
   - At least one field with the author's first name (if there are multiple authors, one field per author)
   - At least one field with the author's last name (if there are multiple authors, one field per author)
@@ -27,6 +27,7 @@ This code gets data from a webmap in ArcGIS online, which serves as the database
   - Volume of the publication
   - Number of the publication volume (if not applicable, leave blank)
   - Date of publication
+  IMPORTANT: The language, publication, and author fields should be all be different from each other.
 2. Compress all shapefiles into a zip file.
 3. In your ArcGIS Online account, create a new WebMap and add a layer "from a File", then upload the zipped shapefiles.  Do NOT select the default, which is to generalize features for web display; select the option to keep original features.   _For the map to be viewed by the public, all layers and the map itself must be made public using the sharing settings in AGOL._  
 
@@ -39,7 +40,7 @@ This code gets data from a webmap in ArcGIS online, which serves as the database
   - `tr.php` - Turkish dictionary of text appearing on interface
   - `config.php` - general site configurations
   - `style.css` - styles
-3. To link to a map, the webmap ID, which can be found at the end of the URL in AGOL, needs to be referenced as the portalItem when a new webmap is created. All layers that are set as visible in AGOL will appear on the map as soon as you link to the webmap as a portal item, but the individual layers must also be input using the variable $layerIDList described above.
+3. To link to a map, the webmap ID, which can be found at the end of the URL in AGOL, needs to be referenced as the portalItem when a new webmap is created. All layers that are set as visible in AGOL will appear on the map as soon as you link to the webmap as a portal item, but the individual layers must also be input using the variable $layerIDList described above.  When you first add the layers to the map, you will get errors and the map won't display properly, but you can get the layer IDs out of the console.  
 
 There is a limited amount of editing, such as adding features or modifying existing features, that can be done in AGOL.  Other changes such as adding fields needs to be done in ArcGIS for Desktop. You will then need to re upload the layers, which will mean they will have new IDs that need to be changed in the code.
 

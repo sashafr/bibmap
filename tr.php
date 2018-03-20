@@ -14,7 +14,8 @@ $hide = 'Hide';
 $showAll = 'Show All';
 $clearSelection = 'Clear selection';
 $selectDistance = 'Select distance';
-$kilometers = 'kilometers';
+$distanceUnitsWord = 'miles'; //the word used to display the units used in the geocoder search; the units themselves must be in English
+//and are set in config.php in the variable $distanceUnits
 $select = 'Select';
 $by = 'by';
 $circle = 'circle';

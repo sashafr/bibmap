@@ -99,6 +99,8 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
             var biggestX;
             var biggestY;
             var geocodeClearClone;
+            var distanceUnits = "<?php echo $distanceUnits ?>";
+
 
             var drawConfig = {
                 drawingSymbol: new SimpleFillSymbol({
@@ -154,6 +156,10 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
             });
 
 
+            //populate the selector
+
+
+
             //---------------------------MISCELLANEOUS FUNCTIONS-----------------------
             //test if value is in array
             function isInArray(value, array) {
@@ -180,70 +186,127 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
 
 
             //-----------------------------FUNCTIONS ASSOCIATED WITH THE VIEW-----------------------------------------
-            //zoom to selected features, or zoom to the full extent of all layers if there are no selected features
-            function zoomToLayer() {
-                smallestX = 100000000;
-                smallestY = 100000000;
-                biggestX = 0;
-                biggestY = 0;
-                var totalFeatures = 0;
-                for (h = 0; h < listOfLayers.length; h++) {
-                    totalFeatures += listOfLayers[h].source.length;
-                }
-                for (h = 0; h < listOfLayers.length; h++) {
-                    if (totalFeatures == 0)
-                    {
-                        layer = listOfBiblioFeatures2[h];
-                    }
-                    else {
-                        layer = listOfLayers[h];
-                    }
-                    if (layer.source){
-                        biblioFeatures = layer.source.toArray();
-                    }
-                    else {
-                        biblioFeatures = layer;
-                    }
-                    //find the largest and smallest x and y values for all points or polygons
-                    //on the map
-                    for (i = 0; i < biblioFeatures.length; i++) {
-                      if (biblioFeatures[i].geometry.centroid) {
-                        if (biblioFeatures[i].geometry.centroid.x < smallestX) {
-                            smallestX = biblioFeatures[i].geometry.centroid.x;
-                        }
-                        if (biblioFeatures[i].geometry.centroid.y < smallestY) {
-                            smallestY = biblioFeatures[i].geometry.centroid.y;
-                        }
-                        if (biblioFeatures[i].geometry.centroid.x > biggestX) {
-                            biggestX = biblioFeatures[i].geometry.centroid.x;
-                        }
-                        if (biblioFeatures[i].geometry.centroid.y > biggestY) {
-                            biggestY = biblioFeatures[i].geometry.centroid.y;
-                        }
-                      }
+            //zoom to selected features
+            function zoomToLayer(zoomLayer, multipleLayers) {
 
-                      if (biblioFeatures[i].geometry.x) {
-                        if (biblioFeatures[i].geometry.x < smallestX) {
-                            smallestX = biblioFeatures[i].geometry.x;
-                        }
-                        if (biblioFeatures[i].geometry.y < smallestY) {
-                            smallestY = biblioFeatures[i].geometry.y;
-                        }
-                        if (biblioFeatures[i].geometry.x > biggestX) {
-                            biggestX = biblioFeatures[i].geometry.x;
-                        }
-                        if (biblioFeatures[i].geometry.y > biggestY) {
-                            biggestY = biblioFeatures[i].geometry.y;
-                        }
+              var padding = <?php echo $extentPadding ?>;
+              var leftMargin = <?php echo $leftMarginMultiplier ?>;
+
+              //get the extent of features across multiple layers
+              if (multipleLayers == true) {
+                //alert("multiple layers");
+
+                biblioFeatures4 = zoomLayer[0].source.toArray();
+              //  alert("number of features: " + biblioFeatures4.length);
+              //  alert(zoomLayer[0].geometryType);
+
+                if (zoomLayer[0].geometryType == "point") {
+
+                  smallestX = biblioFeatures4[0].geometry.x;
+                  smallestY = biblioFeatures4[0].geometry.y;
+                  biggestX = biblioFeatures4[0].geometry.x;
+                  biggestY = biblioFeatures4[0].geometry.y;
+
+                  for (i = 0; i < zoomLayer.length; i++) {
+                    biblioFeatures5 = zoomLayer[i].source.toArray();
+                    if (zoomLayer[i].geometryType == "point") {
+                    for (j = 0; j < biblioFeatures5.length; j++){
+                      if (biblioFeatures5[j].geometry.x < smallestX) {
+                        smallestX = biblioFeatures5[j].geometry.x;
+                      }
+                      if (biblioFeatures5[j].geometry.y < smallestY) {
+                        smallestY = biblioFeatures5[j].geometry.y;
+                      }
+                      if (biblioFeatures5[j].geometry.x > biggestX) {
+                        biggestX = biblioFeatures5[j].geometry.x;
+                      }
+                      if (biblioFeatures5[j].geometry.y > biggestY) {
+                        biggestY = biblioFeatures5[j].geometry.y;
                       }
                     }
                   }
 
-                //create an extent out of the minimum and maximum extents of all visible features
-                var xMargin = (biggestX - smallestX) * 0.25;
-                var yMargin = (biggestY - smallestY) * 0.25;
+                  if (zoomLayer[i].geometryType == "polygon") {
+                    for (j = 0; j < biblioFeatures5.length; j++) {
+                    if (biblioFeatures5[j].geometry.centroid.x < smallestX) {
+                      smallestX = biblioFeatures5[j].geometry.centroid.x;
+                    }
+                    if (biblioFeatures5[j].geometry.centroid.y < smallestY) {
+                      smallestY = biblioFeatures5[j].geometry.centroid.y;
+                    }
+                    if (biblioFeatures5[j].geometry.centroid.x > biggestX) {
+                      biggestX = biblioFeatures5[j].geometry.centroid.x;
+                    }
+                    if (biblioFeatures5[j].geometry.centroid.y > biggestY) {
+                      biggestY = biblioFeatures5[j].geometry.centroid.y;
+                    }
+                  }
+
+                  }
+                }
+
+
+              }
+
+
+
+                if (zoomLayer[0].geometryType == "polygon") {
+                  //alert("polygon");
+                  smallestX = biblioFeatures4[0].geometry.centroid.x;
+                  smallestY = biblioFeatures4[0].geometry.centroid.y;
+                  biggestX = biblioFeatures4[0].geometry.centroid.x;
+                  biggestY = biblioFeatures4[0].geometry.centroid.y;
+
+                  for (i = 0; i < zoomLayer.length; i++){
+                      if (zoomLayer[i].geometryType == "polygon") {
+                      //  alert("polygon");
+                    biblioFeatures5 = zoomLayer[i].source.toArray();
+                    for (j = 0; j < biblioFeatures5.length; j++) {
+                    if (biblioFeatures5[j].geometry.centroid.x < smallestX) {
+                      smallestX = biblioFeatures5[j].geometry.centroid.x;
+                    }
+                    if (biblioFeatures5[j].geometry.centroid.y < smallestY) {
+                      smallestY = biblioFeatures5[j].geometry.centroid.y;
+                    }
+                    if (biblioFeatures5[j].geometry.centroid.x > biggestX) {
+                      biggestX = biblioFeatures5[j].geometry.centroid.x;
+                    }
+                    if (biblioFeatures5[j].geometry.centroid.y > biggestY) {
+                      biggestY = biblioFeatures5[j].geometry.centroid.y;
+                    }
+                  }
+                }
+
+                  if (zoomLayer[i].geometryType == "point") {
+                    //alert("point");
+                    biblioFeatures5 = zoomLayer[i].source.toArray();
+                    for (j = 0; j < biblioFeatures5.length; j++) {
+                    //alert(biblioFeatures5[j].geometry.x);
+                    if (biblioFeatures5[j].geometry.x < smallestX) {
+                      smallestX = biblioFeatures5[j].geometry.x;
+                    }
+                    if (biblioFeatures5[j].geometry.y < smallestY) {
+                      smallestY = biblioFeatures5[j].geometry.y;
+                    }
+                    if (biblioFeatures5[j].geometry.x > biggestX) {
+                      biggestX = biblioFeatures5[j].geometry.x;
+                    }
+                    if (biblioFeatures5[j].geometry.y > biggestY) {
+                      biggestY = biblioFeatures5[j].geometry.y;
+                  }
+                }
+              }
+              }
+            }
+
+
+                //create margins to encourage the map to round its zoom out rather than in
+                var xMargin = (biggestX - smallestX) * padding;
+                var yMargin = (biggestY - smallestY) * padding;
+
+                //create a new extent
                 var extent = new Extent({
-                    xmin: smallestX - (2 * xMargin),
+                    xmin: smallestX - (leftMargin * xMargin),
                     ymin: smallestY - yMargin,
                     xmax: biggestX + xMargin,
                     ymax: biggestY + yMargin,
@@ -253,17 +316,131 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                 });
                 //zoom to that extent
                 view.goTo(extent);
-            }
+              }
+
+              //create extent from a single layer of features
+              if (multipleLayers == false) {
+                //if the features are points
+
+                var biblioFeatures4 = zoomLayer;
+                if (biblioFeatures4[0] && biblioFeatures4[0].geometry.x) {
+                smallestX = biblioFeatures4[0].geometry.x;
+                smallestY = biblioFeatures4[0].geometry.y;
+                biggestX = biblioFeatures4[0].geometry.x;
+                biggestY = biblioFeatures4[0].geometry.y;
+              }
+
+                if (biblioFeatures4[0] && biblioFeatures4[0].geometry.centroid) {
+                  smallestX = biblioFeatures4[0].geometry.centroid.x;
+                  smallestY = biblioFeatures4[0].geometry.centroid.y;
+                  biggestX = biblioFeatures4[0].geometry.centroid.x;
+                  biggestY = biblioFeatures4[0].geometry.centroid.y;
+                }
+
+                for (i = 0; i < biblioFeatures4.length; i++){
+                  if (biblioFeatures4[i].geometry.x) {
+                  if (biblioFeatures4[i].geometry.x < smallestX) {
+                    smallestX = biblioFeatures4[i].geometry.x;
+                  }
+                  if (biblioFeatures4[i].geometry.y < smallestY) {
+                    smallestY = biblioFeatures4[i].geometry.y;
+                  }
+                  if (biblioFeatures4[i].geometry.x > biggestX) {
+                    biggestX = biblioFeatures4[i].geometry.x;
+                  }
+                  if (biblioFeatures4[i].geometry.y> biggestY) {
+                    biggestY = biblioFeatures4[i].geometry.y;
+                  }
+                }
+                if (biblioFeatures4[i].geometry.centroid) {
+                  if (biblioFeatures4[i].geometry.centroid.x < smallestX) {
+                    smallestX = biblioFeatures4[i].geometry.centroid.x;
+                  }
+                  if (biblioFeatures4[i].geometry.centroid.y < smallestY) {
+                    smallestY = biblioFeatures4[i].geometry.centroid.y;
+                  }
+                  if (biblioFeatures4[i].geometry.centroid.x > biggestX) {
+                    biggestX = biblioFeatures4[i].geometry.centroid.x;
+                  }
+                  if (biblioFeatures4[i].geometry.centroid.y > biggestY) {
+                    biggestY = biblioFeatures4[i].geometry.centroid.y;
+                  }
+
+                }
+                }
+
+
+              //if the features are polygons
+              /*if (biblioFeatures4[0] && biblioFeatures4[0].geometry.centroid) {
+                smallestX = biblioFeatures4[0].geometry.centroid.x;
+                smallestY = biblioFeatures4[0].geometry.centroid.y;
+                biggestX = biblioFeatures4[0].geometry.centroid.x;
+                biggestY = biblioFeatures4[0].geometry.centroid.y;
+                for (i = 0; i < biblioFeatures4.length; i++){
+                  if (biblioFeatures4[i].geometry.centroid.x < smallestX) {
+                    smallestX = biblioFeatures4[i].geometry.centroid.x;
+                  }
+                  if (biblioFeatures4[i].geometry.centroid.y < smallestY) {
+                    smallestY = biblioFeatures4[i].geometry.centroid.y;
+                  }
+                  if (biblioFeatures4[i].geometry.centroid.x > biggestX) {
+                    biggestX = biblioFeatures4[i].geometry.centroid.x;
+                  }
+                  if (biblioFeatures4[i].geometry.centroid.y > biggestY) {
+                    biggestY = biblioFeatures4[i].geometry.centroid.y;
+                  }
+                }
+              }*/
+
+                //create margins
+              var xMargin = (biggestX - smallestX) * padding;
+              var yMargin = (biggestY - smallestY) * padding;
+
+              //create extent
+              var extent = new Extent({
+                  xmin: smallestX - (leftMargin * xMargin),
+                  ymin: smallestY - yMargin,
+                  xmax: biggestX + xMargin,
+                  ymax: biggestY + yMargin,
+                  spatialReference: {
+                      wkid: 102100
+                  }
+                });
+              //zoom to that extent
+              view.goTo(extent);
+              }
+
+            } //end zoomToLayer
 
 
             //---------------------------BEGIN VIEW.THEN----------------------
             //fires once the map is loaded.  all map activities must happen here
             view.then(function() {
 
+              //search by word when the enter key is pressed
+              document.getElementById("searchInput")
+                  .addEventListener("keyup", function(event) {
+                  event.preventDefault();
+                  if (event.keyCode === 13) {
+                      document.getElementById("searchBoxButton").click();
+                  }
+              });
+
+              //populate the geocoder distance selector with configurable search distances
+              var distanceSelector = document.getElementById("distance_select");
+              var distances = <?php echo json_encode($distances) ?>;
+              var distanceUnitsWord = "<?php echo $distanceUnitsWord?>";
+              for (i=0; i < distances.length; i++) {
+                distanceSelector.innerHTML += "<option value = '" + distances[i] + "'>" + distances[i] + " " + distanceUnitsWord + "</option>";
+
+              }
+
+
                 //change the symbol for the layers from points to polygons when the user zooms in
                 //past a certain point
                 watchUtils.whenTrue(view, "stationary", function() {
                     //the symbol for the polygons
+
                     highFillSymbol = new SimpleFillSymbol({
                         color: [255, 139, 0, .75],
                         outline: { // autocasts as new SimpleLineSymbol()
@@ -281,6 +458,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
 
 
                     if (layer && view.scale > <?php echo $polygonZoomLevel ?>) {
+
                         var renderer2 = new SimpleRenderer();
                         renderer2.symbol = pointSymbol;
                         for (var i = 0; i < listOfLayers.length; i++) {
@@ -291,6 +469,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                     }
 
                     if (layer && view.scale < <?php echo $polygonZoomLevel ?>) {
+
                         var renderer3 = new SimpleRenderer();
                         renderer3.symbol = highFillSymbol;
                         for (var i = 0; i < listOfLayers.length; i++) {
@@ -310,23 +489,28 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                     console.log(allLayers[i].id);
                 }
                 //identify layers
-                layerID = "TurkeySites1_shapefile_1005";
-                layerID2 = "TurkeySites2_shapefile_3824";
+              //  layerID = "TurkeySites1_shapefile_1005";
+                //layerID2 = "TurkeySites2_shapefile_3824";
                 var layerList = <?php echo json_encode($layerIDList) ?>;
+
 
                 for (i = 0; i < layerList.length; i++) {
                     mapLayer =  map.findLayerById(layerList[i]);
+                  //  alert(mapLayer.id);
                     listOfLayers.push(mapLayer);
                 }
 
                 layer = listOfLayers[0];
 
-                //uncomment this to get all field names and indices
-                /*for (var i = 0; i < layer.fields.length; i++){
-                console.log("field index " + i + " is " + layer.fields[i].name);
-            }*/
 
-            zoomToLayer();
+            var showFields = <?php echo $showFieldsInConsole ?>;
+            if (showFields == true) {
+              for (var i = 0; i < layer.fields.length; i++){
+                console.log("field index " + i + " is " + layer.fields[i].name);
+              }
+            }
+
+            zoomToLayer(listOfLayers, true);
 
             //get the fields associated with author first, last and full name
             var listOfAuthorFieldIndices = <?php echo json_encode($authorIndices) ?>;
@@ -335,7 +519,9 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
 
             for (var i = 0; i < listOfAuthorFieldIndices.length; i ++) {
                 var authorNameIndex = listOfAuthorFieldIndices[i];
+
                 listOfAuthorFields.push(layer.fields[authorNameIndex].name);
+
             }
             for (var i = 0; i < listOfLastNameFieldIndices.length; i ++) {
                 var lastNameIndex = listOfLastNameFieldIndices[i];
@@ -466,8 +652,10 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                     center: point2,
                     geodesic: false,
                     radius: distanceValue,
-                    radiusUnit: "kilometers"
+                    radiusUnit: distanceUnits
                 });
+
+
                 searchArea = circle2;
                 var circleSymb = new SimpleFillSymbol(SimpleFillSymbol.STYLE_NULL,
                     new SimpleLineSymbol(
@@ -548,7 +736,8 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                 view.popup.close();
                 filterByList(biblioFeatures2);
                 biblioFeatures3 = biblioFeatures2;
-                zoomToLayer();
+                zoomToLayer(listOfLayers, true);
+
             });
 
             //filter by the key word typed into the search box
@@ -649,6 +838,11 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
             //is cleared (thisi also clears the circle)
             var clearPolygonTag = document.getElementById("clearPolygonTag");
             clearPolygonTag.addEventListener("click", function() {
+                //alert(searching);
+                if (searching == true) {
+                  geocodeClearClone.click();
+                  searching = false;
+                }
                 clearPolygon();
                 document.getElementById("polygonSearchTag").style.display = "none";
                 filterByAll();
@@ -684,6 +878,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                 layer = listOfLayers[h];
                 var biblioFeaturesLayer = [];
                 var biblioFeatures = layer.source.toArray();
+              //  zoomToLayer();
                 for (var i = 0; i < biblioFeatures.length; i++) {
                     if (biblioFeatures[i].attributes[language] == "Turkish"){
                         biblioFeatures[i].setAttribute("MainTitle", biblioFeatures[i].attributes[turkishTitle]);
@@ -698,6 +893,10 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                     if (!biblioFeatures[i].attributes[language]) {
                         biblioFeatures[i].setAttribute("MainTitle", <?php echo $popupTitle ?>);
 
+                    }
+
+                    else {
+                      biblioFeatures[i].setAttribute("MainTitle", biblioFeatures[i].attributes[englishTitle]);
                     }
 
                     var popupContent;
@@ -775,10 +974,12 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
 
                 //if options are checked in the checklist
                 if (checkedList.length != 0) {
+
                     filterByCheckList();
                 }
                 //if the geometry search is active
                 if (view.graphics.length !=0) {
+                  //alert("search area " + searchArea);
                     filterByGeometry(searchArea);
                 }
                 //if the keyword search is active
@@ -788,19 +989,30 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                 //if no filters remain, show all features
                 if (checkedList.length == 0 && view.graphics.length ==0 && document.getElementById("searchInput").value.length == 0){
                     filterByList(biblioFeatures2);
-                    zoomToLayer();
+                    zoomToLayer(biblioFeatures2, false);
                 }
+
                 paginate(biblioFeatures3, false);
                 linkRecordsToPopups();
                 createBrowse(language, language, false, biblioFeatures3);
                 createBrowse(publication, publication, false, biblioFeatures3);
                 createBrowseMultiple(biblioFeatures3, false);
                 recheckBoxes();
-                zoomToLayer();
+                zoomToLayer(biblioFeatures3, false);
             }
 
             //filter the map by all features that match the checklist criteria
             function filterByCheckList() {
+            /*  checkedList = [];
+            //  alert(checkedList.length);
+            //alert(checkboxes.length);
+              for (var i = 0; i < checkboxes.length; i++) {
+                  if (checkboxes[i].checked == true) {
+                      checkedList.push(checkboxes[i]);
+                  }
+              }*/
+            //alert(checkedList.length);
+
                 document.getElementById("sortSelect").selectedIndex = 0;
                 var filterList = [];
                 //if no boxes are checked, do nothing
@@ -817,28 +1029,35 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                 }
                 //if a checklist search is being run on only one criteron
                 if (nameList.length == 1) {
+                  //filterList = [];
                     for (var i = 0; i <biblioFeatures3.length; i++) {
                         for (var j = 0; j < checkedList.length; j++) {
-                            var field = nameList[0];
+
+                          var field = nameList[0];
                             var value = checkedList[j].id;
                             //if the criterion is author, search for currently displayed features that have a match for the selected author
                             //in any of the author fields
                             if (nameList[0] == "author") {
+
                                 for (var k = 0; k < listOfAuthorFields.length; k++){
                                     var field = listOfAuthorFields[k];
                                     if (biblioFeatures3[i].attributes[field] == value && !isInArray(biblioFeatures3[i], filterList)){
                                         filterList.push(biblioFeatures3[i]);
+
                                     }
                                 }
                             }
                             //otherwise, search for currently displayed features that have a match for the selected search field (which is the element name
                             //of the selected checkbox)
                             if (biblioFeatures3[i].attributes[field] == value && !isInArray(biblioFeatures3[i], filterList)){
+                              //alert(biblioFeatures3[i].attributes[field]);
                                 filterList.push(biblioFeatures3[i]);
+
                             }
                         }
                     }
                 }
+
                 //if more than one search criterion is checked, do the same thing as above, but create a list of lists of
                 //features that match each criterion
                 if (nameList.length > 1) {
@@ -905,7 +1124,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                 }
 
                 paginate(filterList, false);
-                linkRecordsToPopups();
+              //  linkRecordsToPopups();
                 recheckBoxes();
 
             }//end filterByCheckList
@@ -934,7 +1153,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                 biblioFeatures3 = searchList;
                 filterByList(searchList);
                 paginate(searchList, false);
-                linkRecordsToPopups();
+                //linkRecordsToPopups();
             } //end fitlerByWord
 
             //display only selected points on the map
@@ -1024,11 +1243,14 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
             var selectedList = [];
             for (h = 0; h < listOfLayers.length; h++) {
                 layer = listOfLayers[h];
+                //alert(layer.geometryType);
                 biblioFeatures = layer.source.toArray();
                 var includeDistance = false;
+                //alert(biblioFeatures.length);
                 //if the feature falls within the polygon, add it to a list and add a distance attribute
                 for (var i = 0; i < biblioFeatures.length; i++){
                     if (biblioFeatures[i].geometry.centroid) {
+                      //console.log("has centroid");
                         var polygon = new Polygon(biblioFeatures[i].geometry);
                         if (geometryEngine.intersects(searchArea, polygon) || geometryEngine.contains(searchArea, polygon)){
                             if (searchArea.radius) {
@@ -1041,7 +1263,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                         }
                     }
                     else {
-                        var point = biblioFeatures[i].geometry;
+                        var point = new Point (biblioFeatures[i].geometry);
                         if (geometryEngine.contains(searchArea, point)){
                             selectedPoints.add(biblioFeatures[i]);
                             selectedList.push(biblioFeatures[i]);
@@ -1094,6 +1316,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
           //for a given field name, get all values of that field, the number of records with
           //that value, and add them to the given div in the search and browse
           function createBrowse(divId, fieldName, useLayer, selectedFeatures) {
+
               //divId indicates the div that will be populated
               //fieldName is the name of the field used to populate the div
               //useLayer indicates whether the browse should be created using the current value
@@ -1225,6 +1448,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
           //paginate the results
           //divide the results into sets of 10 and attach click listeners to page numbers
           function paginate(recordList, includeDistance) {
+
               var paginateNumbers = document.getElementById("paginateDiv");
               if (recordList.length < 11) {
                   paginateNumbers.innerHTML = "";
@@ -1263,6 +1487,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                       }
                   }
                   createRecordDivs(pageList2, includeDistance);
+                  linkRecordsToPopups();
               }
               return callbackPaginate;
           } //end makeClickCallbackPaginate
@@ -1271,6 +1496,8 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
           //and print its field names and attributes
 
           function createRecordDivs(recordList, includeDistance) {
+
+
               document.getElementById("sortSelectDiv").style.display = "block";
               allRecords.innerHTML = "";
               if (recordList.length == 0) {
@@ -1281,6 +1508,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                   allRecords.innerHTML += '<?php echo $clickOnEntry ?>';
 
               }
+            //  alert(recordList.length);
               for (var i = 0; i < recordList.length; i++) {
                   var idNo = recordList[i].attributes[uniqueID];
                   var biggerDiv =  document.createElement("div");
@@ -1381,6 +1609,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                   alaCitation.className = "citation";
                   alaDiv.appendChild(alaCitation);
                   biggerDiv.innerHTML += "<button type='button' class = 'citeButton' tag ='" + i + "'id = 'cite" + div.id + "'>" + '<?php echo $exportCitation?>' + "</button>";
+
               }
           } //end createRecordDivs
 
@@ -1406,6 +1635,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                   }
               });
               paginate(biblioSort,false);
+              linkRecordsToPopups();
           } //end sortByField
 
 
@@ -1434,7 +1664,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                   document.getElementById("resultsCard").click();
                   resultsShowing = true;
               }
-              zoomToLayer();
+              zoomToLayer(biblioFeatures3, false);
               for (var i = 1; i < biblioFeatures2.length + 1; i++){
                   var divName = "point" + i.toString();
                   //open the corresponding popup when a result is clicked
@@ -1477,6 +1707,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
           //open popup when a record div is clicked
           function makeClickCallback(i, biblioFeatures2) {
               function callback(e){
+
                   for (h = 0; h < listOfLayers.length; h++) {
                       biblioFeatures22 = listOfBiblioFeatures2[h];
                       for (k = 0; k < biblioFeatures22.length; k++) {
@@ -1516,6 +1747,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
           //display citations for individual formats
           function makeClickCallbackCitation(i, style) {
               function callbackCitation(e) {
+
                   var citationID = style + "Citationpoint" + i;
                   var citation = document.getElementById(citationID);
                   if (!citation.style.display || citation.style.display == "none") {
@@ -1532,7 +1764,9 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
 
           //create the citations
           function makeClickCallback3(i) {
+
               function callback3(e){
+
                   var index = i - 1;
                   var firstLastName = listOfLastNameFields[0];
                   var firstFirstName = listOfFirstNameFields[0];
@@ -1805,13 +2039,15 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
               line.addPath([secondPoint]);
               line.spatialReference = view.spatialReference;
               view.graphics.add(new Graphic(line, lineSymbol));
-              var lineDistance = geometryEngine.distance(firstPoint,secondPoint, "kilometers");
+              var lineDistance = geometryEngine.distance(firstPoint,secondPoint, distanceUnits);
               circle = new Circle({
                   center: firstPoint,
                   geodesic: false,
                   radius: lineDistance,
-                  radiusUnit: "kilometers"
+                  radiusUnit: distanceUnits
               });
+              searchArea = circle;
+
               var circleSymb = new SimpleFillSymbol(SimpleFillSymbol.STYLE_NULL,
                   new SimpleLineSymbol(
                       SimpleLineSymbol.STYLE_SHORTDASHDOTDOT,
@@ -1887,11 +2123,7 @@ if (isset($_GET['lang']) && $_GET['lang'] == 'tr'){
                   <div id = "distanceSelectDiv" style = "margin-bottom:10px">
                     <select id="distance_select" class="selector">
                       <option value="init"><?php echo $selectDistance ?></option>
-                      <option value = "20">20 <?php echo $kilometers ?> </option>
-                      <option value = "50">50 <?php echo $kilometers ?> </option>
-                      <option value = "100">100 <?php echo $kilometers ?> </option>
-                      <option value = "200">200 <?php echo $kilometers ?> </option>
-                      <option value = "2000">2000 <?php echo $kilometers ?> </option>
+
                     </select>
                   </div>
                   <div id="circle-button" title = '<?php echo $select ?> <?php echo $by ?> <?php echo $circle ?>' class="esri-widget-button esri-widget esri-interactive"><div style = "font-size:30px">&#9900;</div></div>

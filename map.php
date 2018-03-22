@@ -322,10 +322,13 @@ if (isset($_GET['lang']) && in_array($_GET['lang'], $languageFiles)){
 
         layer = listOfLayers[0];
 
-        //uncomment this to get all field names and indices
-        /*for (var i = 0; i < layer.fields.length; i++){
-        console.log("field index " + i + " is " + layer.fields[i].name);
-      }*/
+        //print field names and indices if this option has been chosen in the config
+        var showFields = <?php echo $showFieldsInConsole ?>;
+        if (showFields == true) {
+          for (var i = 0; i < layer.fields.length; i++){
+            console.log("field index " + i + " is " + layer.fields[i].name);
+          }
+        }
 
       zoomToLayer();
 

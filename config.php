@@ -6,6 +6,9 @@ $polygonZoomLevel = 750000;  //this is the zoom level at which points switch to 
 $layerIDList = array("TurkeySites1_shapefile_1005", "TurkeySites2_shapefile_3824"); //this is the list of Layer ids
 //that contain the points on the map.  You can get layer ids from the console.  The layer id will contain its name in AGOL but it will also contain additional numbers
 
+$showFieldsInConsole = true; //when this is true, the field names and indices will be printed to the console so that the user can
+//know what index corresponds to what field.  once you have the information, you can switch this to false and it will no longer print to the console
+
 
 //these are the indices for various fields that are used to create the popups and citations
 //note: the first field in the table as viewed in AGOL, is actually index 2.  Indexes 0 and 1, which do not appear in

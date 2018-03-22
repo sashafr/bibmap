@@ -1,9 +1,9 @@
 <?php
 //PARAMETERS IN THE JAVASCRIPT THAT CAN BE EDITED BY THE USER
 
-$mapID = "aa5a26d26cc24279b0d619fb62b84453"; //the map ID, which comes from the URL in AGOL
+$mapID = ""; //the map ID, which comes from the URL in AGOL
 $polygonZoomLevel = 75000;  //this is the zoom level at which points switch to polygons
-$layerIDList = array("ParksCentroids_shapefile_7933", "Parks21_shapefile_8161"); //this is the list of Layer ids
+$layerIDList = array("layer1", "layer2"); //this is the list of Layer ids
 //that contain the points on the map.  You can get layer ids from the console.  The layer id will contain its name in AGOL but it will also contain additional numbers
 
 $extentPadding = 0.25;   //this is the percentage (as a decimal) of the visible layer's extent that will be added around the layer when it zooms,
@@ -18,27 +18,27 @@ $showFieldsInConsole = true; //when this is true, the field names and indices wi
 
 //these are the indices for various fields that are used to create the popups and citations.  If you set $showFieldsInConsole to true, the field names and indices will
 //appear in the console.  Use these indices and don't try to guess the indices based on the attribute table in ArcGIS Online
-$englishTitleField = 5;
-$turkishTitleField = 5;
-$otherTitleField = 5;
-$publicationField = 5;
-$languageField = 7;
-$pageStartField = 11;
-$pageEndField = 11;
-$volumeField = 11;
-$numberField = 11;
-$uniqueIDField = 20;
-$dateField = 11;
+$englishTitleField = 0;
+$turkishTitleField = 0;
+$otherTitleField = 0;
+$publicationField = 0;
+$languageField = 0;
+$pageStartField = 0;
+$pageEndField = 0;
+$volumeField = 0;
+$numberField = 0;
+$uniqueIDField = 0;
+$dateField = 0;
 
 
 //these are the indices all the fields that contain author names
-$authorIndices = array(16);
-$firstNameIndices = array(16);
-$lastNameIndices = array(16);
+$authorIndices = array();
+$firstNameIndices = array();
+$lastNameIndices = array();
 
 //these are the names of the fields for language and publication
-$languageFieldName = "USE_";
-$publicationFieldName = "ADDRESS";
+$languageFieldName = "";
+$publicationFieldName = "";
 
 $distances = array(5, 10, 20);
 $distanceUnits = "kilometers"; //this is the value of the units for the distance-based functions.  it must be in English.  the options are
@@ -47,6 +47,6 @@ $distanceUnits = "kilometers"; //this is the value of the units for the distance
 
 // language files
 // only put the name of the file WITHOUT .php file extension
-$languageFiles = array("en", "tr");
+$languageFiles = array("en");
 
 ?>

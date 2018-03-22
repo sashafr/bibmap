@@ -1,7 +1,7 @@
 <?php
 
 //text values in the HTML (from top to bottom)
-$pageTitle = 'Turkish Archaeology Geographical Bibliography';
+$pageTitle = 'Mapped Bibliography Template';
 $about = 'About';
 $abouttext= 'About text goes here';
 $viewPageIn = 'View page in:';
@@ -12,7 +12,7 @@ $hide = 'Hide';
 $showAll = 'Show All';
 $clearSelection = 'Clear selection';
 $selectDistance = 'Select distance';
-$distanceUnitsWord = 'miles'; //the word used to display the units used in the geocoder search; the units themselves must be in English
+$distanceUnitsWord = 'kilometers';  //the word used to display the units used in the geocoder search; the units themselves must be in English
 //and are set in config.php in the variable $distanceUnits
 $select = 'Select';
 $by = 'by';
@@ -20,8 +20,7 @@ $circle = 'circle';
 $polygon = 'polygon';
 $geometrySearch = 'Geometry search';
 $introduction = 'Introduction';
-$introText = 'This site contains a collection of journal articles related to Turkish archaeology.  You can search by language, publication or author.
-You can also search by drawing a line between two points on the map, by drawing a polygon on the map, or by searching an address and selecting a proximity.';
+$introText = 'An introduction to this resource.';
 $searchByLanguage = 'Search by language';
 $searchByPublication = 'Search by publication';
 $searchByAuthor = 'Search by author';
@@ -50,7 +49,5 @@ $TurkishTitleTranslate = 'Turkish title';
 $OtherTitleTranslate = 'Other title';
 $distance = 'Distance';
 $exportCitation = 'Export citation';
-
-
 
 ?>

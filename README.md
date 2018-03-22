@@ -15,21 +15,21 @@ _At present, this webmap is not optimized for mobile access_
 This code gets data from a webmap in ArcGIS online, which serves as the database.
 
 1. All layers should be generated in ArcGIS for Desktop as shapefiles. AGOL can only accept shapefiles of 1000 features or less, so files with more features than that need to be split into sets of 1000.  The application is designed to accommodate as many layers as you need and users won't be able to tell.  Split the shapefile numerically by unique ID (i.e. numbers 1-1000, 1001-2000, etc.).  The layers can be either points or polygons, or a mix of the two. The attribute table should contain the following fields (All layers should have the same fields in the same order.  All fields should be text, except the unique ID field):
-  - IMPORTANT: Your layers should include an integer field that starts at 1 and that is not reset when you split the layer (i.e. don't use FID because each layer will restart the FID values at 0, so there will be more than one feature with the same FID).  The best way to do this is to add a new field before you split the layer, then set it equal to FID + 1.  If you want to do both point and polygon layers together, ensure that all of them have a unique value in this field.
-  - At least one field with the author's full name (if there are multiple authors, one field per author)
-  - At least one field with the author's first name (if there are multiple authors, one field per author)
-  - At least one field with the author's last name (if there are multiple authors, one field per author)
-  - English title
-  - Turkish title
-  - Other language title
-  - Publication title
-  - Language the article is in
-  - Page on which the article starts
-  - Page on which the article ends
-  - Volume of the publication
-  - Number of the publication volume (if not applicable, leave blank)
-  - Date of publication
-  IMPORTANT: The language, publication, and author fields should be all be different from each other.
+    - IMPORTANT: Your layers should include an integer field that starts at 1 and that is not reset when you split the layer (i.e. don't use FID because each layer will restart the FID values at 0, so there will be more than one feature with the same FID).  The best way to do this is to add a new field before you split the layer, then set it equal to FID + 1.  If you want to do both point and polygon layers together, ensure that all of them have a unique value in this field.
+    - At least one field with the author's full name (if there are multiple authors, one field per author)
+    - At least one field with the author's first name (if there are multiple authors, one field per author)
+    - At least one field with the author's last name (if there are multiple authors, one field per author)
+    - English title
+    - Turkish title
+    - Other language title
+    - Publication title
+    - Language the article is in
+    - Page on which the article starts
+    - Page on which the article ends
+    - Volume of the publication
+    - Number of the publication volume (if not applicable, leave blank)
+    - Date of publication
+    - IMPORTANT: The language, publication, and author fields should be all be different from each other.
 2. Compress all files that make up the shape file (eg .shp, .dbf, etc...) for each layer into a zip file. Make sure each layer is a separate zip file. If you ever need to re upload the layers, even if the layers have the same name in ArcGIS, they will be given a new layer name (specifically the number at the end of the layer name) in ArcGIS Online.  You can view the full layer name by looking at the console.  
 3. In your ArcGIS Online account, create a new WebMap and add a layer "from a File", then upload the zipped shapefiles.  Do NOT select the default, which is to generalize features for web display; select the option to keep original features.   _For the map to be viewed by the public, all layers and the map itself must be made public using the sharing settings in AGOL._
 4. When selecting "a drawing style", choose "Location (Single Symbol)".

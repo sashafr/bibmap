@@ -43,26 +43,13 @@ This code gets data from a webmap in ArcGIS online, which serves as the database
     - `tr-dist.php` - Turkish dictionary of text appearing on interface (additional language files could be added, see below)
     - `config-dist.php` - general site configurations
     - `style.css` - styles
-3. Rename fill out all fields in en-dist.php, tr-dist.php, and config-dist.php and rename to en.php, tr.php, and config.php (if you don't want to use multiple languages, you can just remove tr.php)
-4. To link to a map, the webmap ID, which can be found at the end of the URL in AGOL, needs to be referenced as the portalItem when a new webmap is created. All layers that are set as visible in AGOL will appear on the map as soon as you link to the webmap as a portal item, but the individual layers must also be input using the variable $layerIDList described above.  When you first add the layers to the map, you will get errors and the map won't display properly, but you can get the layer IDs out of the console.  Once you enter the layer IDs, the map should display properly, but you'll get errors until you put in the fields, which will appear in the console once you enter the layer IDs.  
-5. To add additional language files, copy en.php and rename to _xLANGUAGE_.php, translate all text fields, and then put *file name only* WITHOUT .php file extension in config file.
+4. *Filling out config.php* Begin by renaming config-dist.php to config.php. Next, to link to a map, the webmap ID, which can be found at the end of the URL in AGOL, needs to be referenced as the portalItem when a new webmap is created. All layers that are set as visible in AGOL will appear on the map as soon as you link to the webmap as a portal item, but the individual layers must also be input using the variable $layerIDList described above (for the searching to work).  When you first add the layers to the map, you will get errors and the map won't display properly, but you can get the layer IDs out of the developer's console in your browser.  Once you enter the layer IDs, the map should display properly, but you'll get errors until you put in the fields, which will appear in the developer's browser console once you enter the layer IDs.  
+5. Indices of the relevant fields should be input into config.php.  Indices of the fields can be found by setting the value of $showFieldsInConsole to true, which will print the field names and indices to the console.  The indices of the fields to be used in the code don't necessarily correspond to the indices of the fields as they appear in ArcGIS Online, because the fields FID and the shape field (if the file has one) are hidden from the attribute table in ArcGIS Online but will impact the index.  Use the index printed in the console and input that into the relevant field index variable in config.php.
+6. There are two additional variables in the config file.  $polygonZoomLevel is the zoom level at which the points change to polygons (the sites are polygons, but will be represented as points when the map is zoomed out past a certain point).  The points change to polygons by changing the layer's renderer between two different symbols.  If all features are points, ignore this value.
+7. *Filling out en.php* Begin by renaming en-dist.php to en.php. Then, change any text in that file to your desired wording.
+8. *Filling out additional language files, such as tr.php* tr-dist.php is an example of an additional language file. If you do not want additional files, then do nothing. To add additional language files, copy en.php and rename to _xLANGUAGE_.php, translate all text fields, and then put *file name only* WITHOUT .php file extension in config file.
 
-There is a limited amount of editing, such as adding features or modifying existing features, that can be done in AGOL.  Other changes such as adding fields needs to be done in ArcGIS for Desktop. You will then need to re upload the layers, which will mean they will have new IDs that need to be changed in the code.
-
-
-Indices of the relevant fields should be input into config.php.  Indices of the fields can be found by setting the value of $showFieldsInConsole to true, which will print the field names and indices to the console.  The indices of the fields to be used in the code don't necessarily correspond to the indices of the fields as they appear in ArcGIS Online, because the fields FID and the shape field (if the file has one) are hidden from the attribute table in ArcGIS Online but will impact the index.  Use the index printed in the console and input that into the relevant field index variable in config.php.    
-
-
-There are two additional variables in the dictionaries.  $polygonZoomLevel is the zoom level at which the points change to polygons (the sites are polygons, but will be represented as points when the map is zoomed out past a certain point).  The points change to polygons by changing the layer's renderer between two different symbols.  If all features are points, ignore this value.
-
-$layerIDList is the array of layers that the map is using to search and display.  A layer's ID contains its name in AGOL but it also contains additional numbers that appear to be random.  The layer ids that need to go in the array come from uncommenting the lines:
-
-for (var i = 0; i < allLayers.length; i++) {
-console.log(allLayers[i].id);
-}  
-
-The ids of the divs that contain the browsable checkboxes in the right sidebar need to match the name of the field that will be searched for those terms.  So for example the id of the div that contains the checkboxes for title, should be the name of the field that contains the title.  When the div id is "author", the browse will search across all author fields (regardless of what those fields are called, as long as they're entered in the array of author field indices).  
-
+_Please Note! There is a limited amount of editing, such as adding features or modifying existing features, that can be done in AGOL.  Other changes such as adding fields needs to be done in ArcGIS for Desktop. You will then need to re upload the layers, which will mean they will have new IDs that need to be changed in the code._  
 
 ## Built With
 
